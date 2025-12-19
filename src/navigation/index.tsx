@@ -11,6 +11,8 @@ import TariflarScreen from '../screens/TariflarScreen';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 
+
+
 const Stack = createNativeStackNavigator();
 
 export default function RootNavigation() {
@@ -19,26 +21,27 @@ export default function RootNavigation() {
 
     const commonHeaderOptions: any = {
         headerShown: true,
+        headerBackVisible: false,
         headerStyle: {
             backgroundColor: isDark ? '#1a1a1a' : '#fff',
         },
         headerTitleStyle: {
             fontSize: 17,
-            fontWeight: '600',
+            fontWeight: '600' as const,
             color: isDark ? '#fff' : '#000',
         },
-        headerTintColor: '#007AFF',
-        headerBackTitleStyle: {
-            fontSize: 15,
-        },
-        headerBackTitle: t('back'),
-        headerBackVisible: true,
     };
 
     return (
         <SafeAreaProvider>
             <NavigationContainer>
-                <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
+                <Stack.Navigator
+                    screenOptions={{
+                        headerShown: false,
+                        animation: 'fade',
+                        presentation: 'card',
+                    }}
+                >
                     <Stack.Screen name="Welcome" component={WelcomeScreen} />
                     <Stack.Screen name="Main" component={MainTabs} />
                     <Stack.Screen

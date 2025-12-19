@@ -28,21 +28,20 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, sho
         <SafeAreaView edges={edges} style={[styles.container, isDark && styles.containerDark]}>
             <StatusBar style={isDark ? "light" : "dark"} />
 
-            {showBackButton && (
-                <View style={styles.topBar}>
-                    {/* Left side: Back button or Spacer */}
-                    <View style={styles.topLeft}>
-                        <TouchableOpacity
-                            onPress={() => navigation.goBack()}
-                            style={styles.backButton}
-                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                        >
-                            <Ionicons name="chevron-back" size={28} color={isDark ? "#fff" : "#007AFF"} />
-                            <Text style={[styles.backText, { color: isDark ? "#fff" : "#007AFF" }]}>{t('back')}</Text>
-                        </TouchableOpacity>
+{showBackButton && (
+                    <View style={styles.topBar}>
+                        {/* Left side: Back button or Spacer */}
+                        <View style={styles.topLeft}>
+                            <TouchableOpacity
+                                onPress={() => navigation.goBack()}
+                                style={styles.backButton}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                                <Ionicons name="chevron-back" size={28} color="#007AFF" />
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
-            )}
+                )}
 
             <View style={[styles.content, style]}>
                 {children}

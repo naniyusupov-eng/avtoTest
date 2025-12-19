@@ -4,6 +4,7 @@ import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import TariffsSection from './TariffsSection';
 
 interface SettingItemProps {
     icon: keyof typeof Ionicons.glyphMap;
@@ -65,19 +66,11 @@ export default function SettingsScreen({ navigation }: any) {
                 showsVerticalScrollIndicator={false}
                 style={[styles.scrollView, isDark && styles.scrollViewDark]}
             >
+                <TariffsSection navigation={navigation} />
                 <View style={[styles.section, { marginTop: 16 }]}>
                     <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('app_settings')}</Text>
                     <View style={[styles.card, isDark && styles.cardDark]}>
-                        <SettingItem
-                            icon="card"
-                            label={t('tariflar')}
-                            color="#34C759"
-                            onPress={() => navigation.navigate('Tariflar')}
-                            rightElement={
-                                <Ionicons name="chevron-forward" size={20} color={isDark ? "#555" : "#CCC"} />
-                            }
-                        />
-                        <View style={[styles.separator, isDark && styles.separatorDark]} />
+
                         <SettingItem
                             icon="language"
                             label={t('language')}
@@ -95,6 +88,18 @@ export default function SettingsScreen({ navigation }: any) {
                                             styles.langOptionText,
                                             i18n.language === 'uz' && styles.langOptionTextActive
                                         ]}>UZ</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        onPress={() => setLanguage('uz_cyrl')}
+                                        style={[
+                                            styles.langOption,
+                                            i18n.language === 'uz_cyrl' && styles.langOptionActive
+                                        ]}
+                                    >
+                                        <Text style={[
+                                            styles.langOptionText,
+                                            i18n.language === 'uz_cyrl' && styles.langOptionTextActive
+                                        ]}>Ўз</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         onPress={() => setLanguage('ru')}
