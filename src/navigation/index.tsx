@@ -8,6 +8,7 @@ import SignsDetailScreen from '../screens/SignsDetailScreen';
 import TicketDetailScreen from '../screens/TicketDetailScreen';
 import SignsListScreen from '../screens/SignsListScreen';
 import TariflarScreen from '../screens/TariflarScreen';
+import ComingSoonScreen from '../screens/ComingSoonScreen';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 
@@ -83,6 +84,14 @@ export default function RootNavigation() {
                             ...commonHeaderOptions,
                             title: t('tariflar'),
                         }}
+                    />
+                    <Stack.Screen
+                        name="ComingSoon"
+                        component={ComingSoonScreen}
+                        options={({ route }: any) => ({
+                            ...commonHeaderOptions,
+                            title: route?.params?.title || t('coming_soon'),
+                        })}
                     />
                 </Stack.Navigator>
             </NavigationContainer>

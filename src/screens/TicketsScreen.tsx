@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
+import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 4;
@@ -10,6 +12,7 @@ const GAP = 12;
 const TICKET_ITEM_SIZE = (width - (GRID_PADDING * 2) - (GAP * (COLUMN_COUNT - 1))) / COLUMN_COUNT;
 
 export const TicketsScreen = ({ navigation }: any) => {
+    const { t } = useTranslation();
     const { isDark } = useTheme();
     const tickets = Array.from({ length: 120 }, (_, i) => i + 1);
 
@@ -23,7 +26,9 @@ export const TicketsScreen = ({ navigation }: any) => {
                     isDark && styles.ticketItemDark,
                     !isLastInRow && { marginRight: GAP }
                 ]}
-                onPress={() => navigation.navigate('TicketDetail', { ticketNumber: item })}
+                onPress={() => navigation.navigate('ComingSoon', {
+                    title: t('ticket_number', { number: item })
+                })}
             >
                 <Text style={[
                     styles.ticketNumber,

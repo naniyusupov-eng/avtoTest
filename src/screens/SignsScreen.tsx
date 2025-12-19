@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -32,7 +33,7 @@ export const SignsScreen = ({ navigation }: any) => {
         <TouchableOpacity
             key={item.id}
             style={[styles.categoryCard, isDark && styles.cardDark]}
-            onPress={() => navigation.navigate('SignsList', { categoryId: item.id, title: t(item.titleKey) })}
+            onPress={() => navigation.navigate('ComingSoon', { title: t(item.titleKey) })}
         >
             <View style={[styles.iconBox, { backgroundColor: `${item.color}15` }]}>
                 <Ionicons name={item.icon as any} size={24} color={item.color} />

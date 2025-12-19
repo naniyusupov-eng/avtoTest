@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
@@ -45,8 +46,9 @@ export const RulesScreen = ({ navigation }: any) => {
         <TouchableOpacity
             style={[styles.chapterCard, isDark && styles.cardDark]}
             onPress={() => {
-                // TODO: Navigate to chapter detail
-                console.log('Chapter', item.id);
+                navigation.navigate('ComingSoon', {
+                    title: t(item.key)
+                });
             }}
         >
             <View style={[styles.numberBox, isDark && styles.numberBoxDark]}>

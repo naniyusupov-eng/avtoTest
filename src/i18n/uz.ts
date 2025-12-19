@@ -5,6 +5,7 @@ export default {
         back: 'Orqaga',
         home: 'Asosiy',
         tickets: 'Biletlar',
+        ticket_number: '{{number}}-bilet',
         signs: 'Belgilar',
         road_signs: 'Yoʻl belgilari',
         road_markings: 'Yoʻlning qatnov qismi yuzasidagi chiziqlar',
@@ -87,5 +88,9 @@ export default {
         select_plan: 'Tanlash',
         best_value: 'ENG FOYDALI',
         unlock_premium: 'Premium imkoniyatlarni oching',
+        coming_soon: 'Tez orada',
+        font_size: "Shrift o'lchami",
+        sample_text: 'Namuna matn: 123',
+        coming_soon_desc: 'Ushbu boʻlim ustida ishlamoqdamiz. Yangilanishlarni kuting!',
     },
 };

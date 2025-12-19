@@ -5,6 +5,7 @@ export default {
         back: 'Назад',
         home: 'Главная',
         tickets: 'Билеты',
+        ticket_number: 'Билет №{{number}}',
         signs: 'Знаки',
         road_signs: 'Дорожные знаки',
         road_markings: 'Разметка на проезжей части дороги',
@@ -87,5 +88,9 @@ export default {
         select_plan: 'Выбрать',
         best_value: 'ЛУЧШИЙ ВЫБОР',
         unlock_premium: 'Откройте Premium возможности',
+        coming_soon: 'Скоро',
+        font_size: "Размер шрифта",
+        sample_text: 'Пример текста: 123',
+        coming_soon_desc: 'Мы работаем над этим разделом. Ждите обновлений!',
     },
 };

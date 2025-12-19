@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Share, Linking } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Switch, ScrollView, Share, Linking } from 'react-native';
+import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import TariffsSection from './TariffsSection';
+import Slider from '@react-native-community/slider';
+import { useFontSize } from '../context/FontSizeContext';
+import { FontSizeModal } from '../components/FontSizeModal';
 
 interface SettingItemProps {
     icon: keyof typeof Ionicons.glyphMap;
@@ -39,6 +43,8 @@ const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onP
 export default function SettingsScreen({ navigation }: any) {
     const { t, i18n } = useTranslation();
     const { isDark, toggleTheme } = useTheme();
+    const { fontSize, setFontSize } = useFontSize();
+    const [isFontModalVisible, setFontModalVisible] = useState(false);
     const [notifications, setNotifications] = useState(true);
 
     const setLanguage = (lang: string) => {
@@ -99,7 +105,7 @@ export default function SettingsScreen({ navigation }: any) {
                                         <Text style={[
                                             styles.langOptionText,
                                             i18n.language === 'uz_cyrl' && styles.langOptionTextActive
-                                        ]}>Ўз</Text>
+                                        ]}>ЎЗ</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         onPress={() => setLanguage('ru')}
@@ -131,6 +137,7 @@ export default function SettingsScreen({ navigation }: any) {
                             }
                         />
                         <View style={[styles.separator, isDark && styles.separatorDark]} />
+
                         <SettingItem
                             icon="moon"
                             label={t('dark_mode')}
@@ -144,8 +151,20 @@ export default function SettingsScreen({ navigation }: any) {
                                 />
                             }
                         />
+                        <View style={[styles.separator, isDark && styles.separatorDark]} />
+                        <SettingItem
+                            icon="text"
+                            label={t('font_size')}
+                            color="#007AFF"
+                            onPress={() => setFontModalVisible(true)}
+                            rightElement={
+                                <Text style={{ color: '#8E8E93', fontSize: 16 }}>{fontSize}px</Text>
+                            }
+                        />
                     </View>
                 </View>
+
+                <FontSizeModal visible={isFontModalVisible} onClose={() => setFontModalVisible(false)} />
 
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('support')}</Text>
@@ -276,7 +295,7 @@ const styles = StyleSheet.create({
         borderRadius: 6,
     },
     langOptionActive: {
-        backgroundColor: '#FFF',
+        backgroundColor: '#007AFF',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
@@ -289,6 +308,6 @@ const styles = StyleSheet.create({
         color: '#8E8E93',
     },
     langOptionTextActive: {
-        color: '#000',
+        color: '#FFF',
     }
 });

@@ -5,6 +5,7 @@ export default {
         back: 'Орқага',
         home: 'Асосий',
         tickets: 'Билетлар',
+        ticket_number: '{{number}}-билет',
         signs: 'Белгилар',
         road_signs: 'Йўл белгилари',
         road_markings: 'Йўлнинг қатнов қисми юзасидаги чизиқлар',
@@ -87,5 +88,9 @@ export default {
         select_plan: 'Танлаш',
         best_value: 'ЭНГ ФОЙДАЛИ',
         unlock_premium: 'Premium имкониятларни очинг',
+        coming_soon: 'Тез орада',
+        font_size: "Шрифт ўлчами",
+        sample_text: 'Намуна матн: 123',
+        coming_soon_desc: 'Ушбу бўлим устида ишламоқдамиз. Янгиланишларни кутинг!',
     },
 };
