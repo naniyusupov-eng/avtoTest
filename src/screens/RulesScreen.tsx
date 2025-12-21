@@ -46,8 +46,8 @@ export const RulesScreen = ({ navigation }: any) => {
         <TouchableOpacity
             style={[styles.chapterCard, isDark && styles.cardDark]}
             onPress={() => {
-                navigation.navigate('ComingSoon', {
-                    title: t(item.key)
+                navigation.navigate('RuleDetail', {
+                    chapterId: item.id
                 });
             }}
         >
@@ -64,7 +64,10 @@ export const RulesScreen = ({ navigation }: any) => {
     );
 
     return (
-        <ScreenLayout edges={['left', 'right']}>
+        <ScreenLayout
+            edges={['top', 'left', 'right']}
+            title={t('rules')}
+        >
             <FlatList
                 data={CHAPTERS}
                 keyExtractor={(item) => item.id.toString()}
@@ -79,6 +82,7 @@ export const RulesScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
     listContent: {
         padding: 16,
+        paddingBottom: 100,
     },
     chapterCard: {
         flexDirection: 'row',
@@ -94,7 +98,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     cardDark: {
-        backgroundColor: '#1C1C1E',
+        backgroundColor: '#2C2C2E',
         shadowOpacity: 0.3,
     },
     numberBox: {

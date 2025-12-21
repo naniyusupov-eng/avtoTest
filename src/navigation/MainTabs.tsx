@@ -31,6 +31,7 @@ export default function MainTabs() {
                     fontSize: 17,
                     fontWeight: '600',
                 },
+                headerShown: false,
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName: keyof typeof Ionicons.glyphMap = 'home';
 
@@ -49,20 +50,29 @@ export default function MainTabs() {
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
                 tabBarActiveTintColor: '#007AFF',
-                tabBarInactiveTintColor: 'gray',
+                tabBarInactiveTintColor: isDark ? '#8E8E93' : '#AEAEB2',
+                tabBarShowLabel: false,
                 tabBarStyle: {
-                    backgroundColor: isDark ? '#1a1a1a' : '#fff',
-                    borderTopColor: 'transparent',
+                    backgroundColor: isDark ? '#2C2C2E' : '#FFFFFF',
+                    position: 'absolute',
+                    bottom: 25,
+                    marginHorizontal: 20,
+                    height: 64,
+                    borderRadius: 32,
                     shadowColor: '#000',
-                    shadowOffset: { width: 0, height: -1 },
-                    shadowOpacity: isDark ? 0.2 : 0.05,
-                    shadowRadius: 3,
-                    elevation: 3,
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: isDark ? 0.3 : 0.1,
+                    shadowRadius: 12,
+                    elevation: 8,
+                    borderTopWidth: 0,
+                },
+                tabBarItemStyle: {
+                    paddingVertical: 10,
                 }
             })}
         >
             <Tab.Screen name="Home" component={HomeScreen} options={{ title: t('home') }} />
-            <Tab.Screen name="Tickets" component={TicketsScreen} options={{ title: t('tickets') }} />
+            <Tab.Screen name="Tickets" component={TicketsScreen} options={{ title: t('tickets'), headerShown: false }} />
             <Tab.Screen name="Signs" component={SignsScreen} options={{ title: t('signs') }} />
             <Tab.Screen name="Rules" component={RulesScreen} options={{ title: t('rules') }} />
             <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: t('settings') }} />

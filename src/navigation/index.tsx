@@ -9,6 +9,7 @@ import TicketDetailScreen from '../screens/TicketDetailScreen';
 import SignsListScreen from '../screens/SignsListScreen';
 import TariflarScreen from '../screens/TariflarScreen';
 import ComingSoonScreen from '../screens/ComingSoonScreen';
+import RuleDetailScreen from '../screens/RuleDetailScreen';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 
@@ -21,7 +22,7 @@ export default function RootNavigation() {
     const { isDark } = useTheme();
 
     const commonHeaderOptions: any = {
-        headerShown: true,
+        headerShown: false,
         headerBackVisible: false,
         headerStyle: {
             backgroundColor: isDark ? '#1a1a1a' : '#fff',
@@ -92,6 +93,14 @@ export default function RootNavigation() {
                             ...commonHeaderOptions,
                             title: route?.params?.title || t('coming_soon'),
                         })}
+                    />
+                    <Stack.Screen
+                        name="RuleDetail"
+                        component={RuleDetailScreen}
+                        options={{
+                            ...commonHeaderOptions,
+                            title: t('rules'),
+                        }}
                     />
                 </Stack.Navigator>
             </NavigationContainer>

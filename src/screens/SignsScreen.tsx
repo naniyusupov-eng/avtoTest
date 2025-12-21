@@ -33,7 +33,7 @@ export const SignsScreen = ({ navigation }: any) => {
         <TouchableOpacity
             key={item.id}
             style={[styles.categoryCard, isDark && styles.cardDark]}
-            onPress={() => navigation.navigate('ComingSoon', { title: t(item.titleKey) })}
+            onPress={() => navigation.navigate('SignsList', { categoryId: item.id, title: t(item.titleKey) })}
         >
             <View style={[styles.iconBox, { backgroundColor: `${item.color}15` }]}>
                 <Ionicons name={item.icon as any} size={24} color={item.color} />
@@ -48,7 +48,10 @@ export const SignsScreen = ({ navigation }: any) => {
     );
 
     return (
-        <ScreenLayout edges={['left', 'right']}>
+        <ScreenLayout
+            edges={['top', 'left', 'right']}
+            title={t('signs')}
+        >
             <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
                 <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('road_signs')}</Text>
                 {SIGN_CATEGORIES.map(renderCategory)}
@@ -65,6 +68,7 @@ export const SignsScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
     container: {
         padding: 16,
+        paddingBottom: 100,
     },
     sectionTitle: {
         fontSize: 20,
@@ -88,7 +92,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     cardDark: {
-        backgroundColor: '#1C1C1E',
+        backgroundColor: '#2C2C2E',
         shadowOpacity: 0.3,
     },
     iconBox: {

@@ -9,39 +9,45 @@ import { useTheme } from '../context/ThemeContext';
 
 interface ScreenLayoutProps {
     children: React.ReactNode;
-    style?: any;
+    style?: any; // Content style
+    containerStyle?: any; // Root style
     showBackButton?: boolean;
+    title?: string;
     edges?: Edge[];
 }
 
-export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, showBackButton, edges = ['top', 'bottom', 'left', 'right'] }) => {
-    const { isDark, toggleTheme } = useTheme();
+export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, containerStyle, showBackButton, title, edges = ['top', 'bottom', 'left', 'right'] }) => {
+    const { isDark } = useTheme();
     const navigation = useNavigation();
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
 
-    const toggleLanguage = () => {
-        const nextLang = i18n.language === 'uz' ? 'ru' : 'uz';
-        i18n.changeLanguage(nextLang);
-    };
+    // Standard background colors
+    const defaultBg = isDark ? '#1C1C1E' : '#F7F8FA';
+    const containerBg = containerStyle?.backgroundColor || defaultBg;
 
     return (
-        <SafeAreaView edges={edges} style={[styles.container, isDark && styles.containerDark]}>
+        <SafeAreaView edges={edges} style={[styles.container, containerStyle, { backgroundColor: containerBg }]}>
             <StatusBar style={isDark ? "light" : "dark"} />
 
-{showBackButton && (
-                    <View style={styles.topBar}>
-                        {/* Left side: Back button or Spacer */}
-                        <View style={styles.topLeft}>
-                            <TouchableOpacity
-                                onPress={() => navigation.goBack()}
-                                style={styles.backButton}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                            >
-                                <Ionicons name="chevron-back" size={28} color="#007AFF" />
-                            </TouchableOpacity>
-                        </View>
+            {(showBackButton || title) && (
+                <View style={[styles.topBar, isDark && styles.topBarDark]}>
+                    <TouchableOpacity
+                        style={styles.headerLeft}
+                        onPress={() => showBackButton ? navigation.goBack() : {}}
+                        disabled={!showBackButton}
+                    >
+                        {showBackButton && (
+                            <Ionicons name="chevron-back" size={24} color={isDark ? '#FFF' : '#000'} />
+                        )}
+                    </TouchableOpacity>
+
+                    <View style={styles.headerTitleContainer}>
+                        <Text style={[styles.headerTitle, isDark && styles.textWhite]}>{title}</Text>
                     </View>
-                )}
+
+                    <View style={styles.headerRight} />
+                </View>
+            )}
 
             <View style={[styles.content, style]}>
                 {children}
@@ -53,57 +59,43 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, sho
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#F7F8FA', // Default
     },
     containerDark: {
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#1C1C1E',
     },
     topBar: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 8,
-        height: 50,
+        paddingVertical: 10,
+        backgroundColor: 'transparent',
         zIndex: 10,
     },
-    topLeft: {
-        flex: 1,
+    topBarDark: {
+        backgroundColor: 'transparent',
+    },
+    headerLeft: {
+        width: 40,
         alignItems: 'flex-start',
     },
-    controls: {
-        flexDirection: 'row',
+    headerTitleContainer: {
+        flex: 1,
         alignItems: 'center',
-        gap: 12,
     },
-    iconButton: {
+    headerTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#000',
+    },
+    headerRight: {
         width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#f0f0f0',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    iconButtonDark: {
-        backgroundColor: '#333',
-    },
-    langButton: {
-        width: 45, // Slightly wider for flag
-    },
-    langText: {
-        fontSize: 20,
-    },
-    backButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    backText: {
-        fontSize: 17,
-        marginLeft: -2,
-        fontWeight: '500',
     },
     content: {
         flex: 1,
         paddingHorizontal: 0,
+    },
+    textWhite: {
+        color: '#FFF',
     },
 });

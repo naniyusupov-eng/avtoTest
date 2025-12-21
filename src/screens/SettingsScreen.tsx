@@ -6,7 +6,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import TariffsSection from './TariffsSection';
-import Slider from '@react-native-community/slider';
 import { useFontSize } from '../context/FontSizeContext';
 import { FontSizeModal } from '../components/FontSizeModal';
 
@@ -16,7 +15,7 @@ interface SettingItemProps {
     description?: string;
     onPress?: () => void;
     rightElement?: React.ReactNode;
-    color?: string;
+    color?: string; // Icon Background Color
 }
 
 const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onPress, rightElement, color = '#007AFF' }) => {
@@ -27,15 +26,18 @@ const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onP
             style={[styles.item, isDark && styles.itemDark]}
             onPress={onPress}
             disabled={!onPress}
+            activeOpacity={0.6}
         >
-            <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
-                <Ionicons name={icon} size={22} color={color} />
+            <View style={[styles.iconContainer, { backgroundColor: color }]}>
+                <Ionicons name={icon} size={18} color="#FFF" />
             </View>
             <View style={styles.textContainer}>
                 <Text style={[styles.label, isDark && styles.textWhite]}>{label}</Text>
                 {description && <Text style={styles.description}>{description}</Text>}
             </View>
-            {rightElement}
+            {rightElement ? rightElement : (
+                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+            )}
         </TouchableOpacity>
     );
 };
@@ -43,7 +45,7 @@ const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onP
 export default function SettingsScreen({ navigation }: any) {
     const { t, i18n } = useTranslation();
     const { isDark, toggleTheme } = useTheme();
-    const { fontSize, setFontSize } = useFontSize();
+    const { fontSize } = useFontSize();
     const [isFontModalVisible, setFontModalVisible] = useState(false);
     const [notifications, setNotifications] = useState(true);
 
@@ -55,7 +57,7 @@ export default function SettingsScreen({ navigation }: any) {
         try {
             await Share.share({
                 message: t('share_app_message', 'Check out AvtoTest app!'),
-                url: 'https://play.google.com/store/apps/details?id=com.yourapp', // Replace with actual app link
+                url: 'https://play.google.com/store/apps/details?id=com.yourapp',
             });
         } catch (error) {
             console.error(error);
@@ -63,17 +65,25 @@ export default function SettingsScreen({ navigation }: any) {
     };
 
     const handleSupport = () => {
-        Linking.openURL('https://t.me/your_support_bot'); // Replace with actual Telegram link
+        Linking.openURL('https://t.me/your_support_bot');
     };
 
     return (
-        <ScreenLayout edges={['left', 'right']} style={styles.container}>
+        <ScreenLayout
+            edges={['top', 'left', 'right']}
+            title={t('settings')}
+        >
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 style={[styles.scrollView, isDark && styles.scrollViewDark]}
+                contentContainerStyle={{ paddingBottom: 100, paddingTop: 16 }}
             >
-                <TariffsSection navigation={navigation} />
-                <View style={[styles.section, { marginTop: 16 }]}>
+                {/* Tariffs usually distinct */}
+                <View style={{ marginBottom: 24 }}>
+                    <TariffsSection navigation={navigation} />
+                </View>
+
+                <View style={styles.section}>
                     <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('app_settings')}</Text>
                     <View style={[styles.card, isDark && styles.cardDark]}>
 
@@ -155,10 +165,13 @@ export default function SettingsScreen({ navigation }: any) {
                         <SettingItem
                             icon="text"
                             label={t('font_size')}
-                            color="#007AFF"
+                            color="#00C7BE"
                             onPress={() => setFontModalVisible(true)}
                             rightElement={
-                                <Text style={{ color: '#8E8E93', fontSize: 16 }}>{fontSize}px</Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Text style={{ color: '#8E8E93', fontSize: 17, marginRight: 6 }}>{fontSize}px</Text>
+                                    <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                </View>
                             }
                         />
                     </View>
@@ -170,7 +183,7 @@ export default function SettingsScreen({ navigation }: any) {
                     <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('support')}</Text>
                     <View style={[styles.card, isDark && styles.cardDark]}>
                         <SettingItem
-                            icon="help-circle"
+                            icon="help-buoy"
                             label={t('help_support')}
                             color="#34C759"
                             onPress={handleSupport}
@@ -195,10 +208,11 @@ export default function SettingsScreen({ navigation }: any) {
                     <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('about')}</Text>
                     <View style={[styles.card, isDark && styles.cardDark]}>
                         <SettingItem
-                            icon="information-circle"
+                            icon="information"
                             label={t('version')}
                             description="1.0.0"
                             color="#8E8E93"
+                            rightElement={<Text style={{ color: '#8E8E93', fontSize: 17 }}>1.0.0</Text>}
                         />
                     </View>
                 </View>
@@ -210,62 +224,62 @@ export default function SettingsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingHorizontal: 0,
     },
     scrollView: {
-        backgroundColor: '#FFF',
+        backgroundColor: 'transparent',
     },
     scrollViewDark: {
-        backgroundColor: '#1a1a1a',
+        backgroundColor: 'transparent',
     },
     section: {
-        marginTop: 32,
+        marginBottom: 24,
     },
     sectionTitle: {
         fontSize: 13,
-        fontWeight: '400',
+        fontWeight: '500',
         color: '#6E6E73',
         marginBottom: 8,
-        marginLeft: 16,
+        marginLeft: 32, // Indent for inset
         textTransform: 'uppercase',
     },
     card: {
         backgroundColor: '#FFF',
-        borderTopWidth: StyleSheet.hairlineWidth,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderColor: '#C6C6C8',
+        borderRadius: 16,
+        marginHorizontal: 16,
+        overflow: 'hidden',
     },
     cardDark: {
         backgroundColor: '#2C2C2E',
-        borderColor: '#3A3A3C',
     },
     item: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 10,
+        paddingVertical: 11,
         paddingHorizontal: 16,
-        minHeight: 44,
+        minHeight: 46,
+        backgroundColor: 'transparent',
     },
     itemDark: {
-        // backgroundColor: '#1C1C1E',
     },
     iconContainer: {
-        width: 30,
-        height: 30,
+        width: 28,
+        height: 28,
         borderRadius: 6,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: 14,
     },
     textContainer: {
         flex: 1,
+        justifyContent: 'center',
     },
     label: {
         fontSize: 17,
         color: '#000',
+        fontWeight: '400',
     },
     description: {
-        fontSize: 14,
+        fontSize: 13,
         color: '#8E8E93',
         marginTop: 2,
     },
@@ -275,10 +289,10 @@ const styles = StyleSheet.create({
     separator: {
         height: StyleSheet.hairlineWidth,
         backgroundColor: '#C6C6C8',
-        marginLeft: 58,
+        marginLeft: 58, // 16 (pad) + 28 (icon) + 14 (margin) = 58
     },
     separatorDark: {
-        backgroundColor: '#3A3A3C',
+        backgroundColor: '#38383A',
     },
     langToggleContainer: {
         flexDirection: 'row',
@@ -290,12 +304,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#3A3A3C',
     },
     langOption: {
-        paddingHorizontal: 12,
+        paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 6,
     },
     langOptionActive: {
-        backgroundColor: '#007AFF',
+        backgroundColor: '#FFF',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
@@ -304,10 +318,10 @@ const styles = StyleSheet.create({
     },
     langOptionText: {
         fontSize: 13,
-        fontWeight: '500',
+        fontWeight: '600',
         color: '#8E8E93',
     },
     langOptionTextActive: {
-        color: '#FFF',
+        color: '#000',
     }
 });
