@@ -55,7 +55,7 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, con
                         disabled={!showBackButton}
                     >
                         {showBackButton && (
-                            <Ionicons name="chevron-back" size={24} color={isDark ? '#FFF' : '#000'} />
+                            <Ionicons name="chevron-back" size={24} color={isDark ? '#FFF' : '#141E30'} />
                         )}
                     </TouchableOpacity>
 
@@ -66,7 +66,7 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, con
                     <View style={styles.headerRight}>
                         {onSearch && (
                             <TouchableOpacity onPress={toggleSearch} style={styles.iconButton}>
-                                <Ionicons name={isSearchVisible ? "close" : "search"} size={24} color={isDark ? '#FFF' : '#000'} />
+                                <Ionicons name={isSearchVisible ? "close" : "search"} size={24} color={isDark ? '#FFF' : '#141E30'} />
                             </TouchableOpacity>
                         )}
                     </View>

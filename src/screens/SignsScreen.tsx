@@ -10,8 +10,8 @@ const SIGN_CATEGORIES = [
     { id: 'warning', titleKey: 'warning_signs', icon: 'warning', color: '#FF9500' },
     { id: 'priority', titleKey: 'priority_signs', icon: 'chevron-up-circle', color: '#FF3B30' },
     { id: 'prohibiting', titleKey: 'prohibiting_signs', icon: 'ban', color: '#FF3B30' },
-    { id: 'mandatory', titleKey: 'mandatory_signs', icon: 'arrow-forward-circle', color: '#007AFF' },
-    { id: 'information', titleKey: 'information_signs', icon: 'information-circle', color: '#007AFF' },
+    { id: 'mandatory', titleKey: 'mandatory_signs', icon: 'arrow-forward-circle', color: '#141E30' },
+    { id: 'information', titleKey: 'information_signs', icon: 'information-circle', color: '#141E30' },
     { id: 'service', titleKey: 'service_signs', icon: 'business', color: '#34C759' },
     { id: 'additional', titleKey: 'additional_signs', icon: 'add-circle', color: '#8E8E93' },
     { id: 'temporary', titleKey: 'temporary_signs', icon: 'construct', color: '#FFCC00' },
@@ -21,7 +21,7 @@ const SIGN_CATEGORIES = [
 ];
 
 const MARKING_CATEGORIES = [
-    { id: 'horizontal_markings', titleKey: 'horizontal_markings', icon: 'remove', color: '#007AFF' },
+    { id: 'horizontal_markings', titleKey: 'horizontal_markings', icon: 'remove', color: '#141E30' },
     { id: 'vertical_markings', titleKey: 'vertical_markings', icon: 'reorder-two', color: '#5856D6' },
 ];
 

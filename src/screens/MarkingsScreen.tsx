@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 
 const MARKING_CATEGORIES = [
-    { id: 'horizontal_markings', titleKey: 'horizontal_markings', icon: 'remove', color: '#007AFF' },
+    { id: 'horizontal_markings', titleKey: 'horizontal_markings', icon: 'remove', color: '#141E30' },
     { id: 'vertical_markings', titleKey: 'vertical_markings', icon: 'reorder-two', color: '#5856D6' },
 ];
 

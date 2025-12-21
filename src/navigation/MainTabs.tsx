@@ -49,7 +49,7 @@ export default function MainTabs() {
 
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
-                tabBarActiveTintColor: '#007AFF',
+                tabBarActiveTintColor: isDark ? '#4A9EFF' : '#141E30',
                 tabBarInactiveTintColor: isDark ? '#8E8E93' : '#AEAEB2',
                 tabBarShowLabel: false,
                 tabBarStyle: {

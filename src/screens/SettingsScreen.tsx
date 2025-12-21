@@ -19,7 +19,7 @@ interface SettingItemProps {
     style?: any;
 }
 
-const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onPress, rightElement, color = '#007AFF', style }) => {
+const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onPress, rightElement, color = '#243B55', style }) => {
     const { isDark } = useTheme();
 
     return (
@@ -99,7 +99,7 @@ export default function SettingsScreen({ navigation }: any) {
     const showVersion = isVisible(t('version')) || isVisible(t('about'));
     const showAboutSection = showVersion;
 
-    const showTariffs = isVisible(t('tariflar')) || isVisible('Premium'); // Basic check
+    const showTariffs = isVisible(t('tariflar')) || isVisible('Premium');
 
     return (
         <ScreenLayout
@@ -129,7 +129,7 @@ export default function SettingsScreen({ navigation }: any) {
                                     <SettingItem
                                         icon="language"
                                         label={t('language')}
-                                        color="#007AFF"
+                                        color="#243B55" // Dark Blue
                                         onPress={() => setLangModalVisible(true)}
                                         rightElement={
                                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -147,7 +147,7 @@ export default function SettingsScreen({ navigation }: any) {
                                     <SettingItem
                                         icon="notifications"
                                         label={t('notifications')}
-                                        color="#FF9500"
+                                        color="#FF9500" // Keep Semantic Color
                                         rightElement={
                                             <Switch
                                                 value={notifications}
@@ -166,7 +166,7 @@ export default function SettingsScreen({ navigation }: any) {
                                     <SettingItem
                                         icon="moon"
                                         label={t('dark_mode')}
-                                        color="#5856D6"
+                                        color="#5856D6" // Keep Semantic Color
                                         rightElement={
                                             <Switch
                                                 value={isDark}
@@ -184,7 +184,7 @@ export default function SettingsScreen({ navigation }: any) {
                                 <SettingItem
                                     icon="text"
                                     label={t('font_size')}
-                                    color="#00C7BE"
+                                    color="#141E30" // Dark Blue-ish Black
                                     onPress={() => setFontModalVisible(true)}
                                     rightElement={
                                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -224,7 +224,7 @@ export default function SettingsScreen({ navigation }: any) {
                                             {lang.label}
                                         </Text>
                                         {i18n.language === lang.code && (
-                                            <Ionicons name="checkmark" size={24} color="#007AFF" />
+                                            <Ionicons name="checkmark" size={24} color="#243B55" />
                                         )}
                                     </TouchableOpacity>
                                     {index < LANGUAGES.length - 1 && (
@@ -267,9 +267,9 @@ export default function SettingsScreen({ navigation }: any) {
                                     step={1}
                                     value={fontSize}
                                     onValueChange={setFontSize}
-                                    minimumTrackTintColor="#007AFF"
+                                    minimumTrackTintColor="#243B55"
                                     maximumTrackTintColor={isDark ? "#555" : "#CCC"}
-                                    thumbTintColor="#007AFF"
+                                    thumbTintColor="#243B55"
                                 />
                             </View>
 
@@ -309,7 +309,7 @@ export default function SettingsScreen({ navigation }: any) {
                                 <SettingItem
                                     icon="share-social"
                                     label={t('share_app')}
-                                    color="#007AFF"
+                                    color="#243B55" // Dark Blue
                                     onPress={handleShare}
                                 />
                             )}
@@ -415,11 +415,10 @@ const styles = StyleSheet.create({
     separatorDark: {
         backgroundColor: '#38383A',
     },
-    // Center Modal Styles
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'center', // Centered
+        justifyContent: 'center',
         alignItems: 'center',
     },
     modalContent: {
@@ -464,7 +463,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     langLabelActive: {
-        color: '#007AFF',
+        color: '#243B55',
         fontWeight: '600',
     },
     modalSeparator: {
@@ -486,7 +485,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#000',
     },
-    // Slider Styles
     sliderContainer: {
         width: '100%',
         marginBottom: 10,

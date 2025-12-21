@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 10,
-        backgroundColor: '#007AFF15',
+        backgroundColor: '#141E3015',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 14,
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     numberText: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#007AFF',
+        color: '#141E30',
     },
     numberTextDark: {
         color: '#4A9EFF',
