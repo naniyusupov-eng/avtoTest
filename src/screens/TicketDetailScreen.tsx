@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert, Dimensions, FlatList, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert, Dimensions, FlatList, Image, Animated } from 'react-native';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
@@ -41,6 +41,25 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
 
     const flatListRef = useRef<FlatList>(null);
     const paginationScrollRef = useRef<ScrollView>(null);
+
+    // Animations
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    const slideAnim = useRef(new Animated.Value(20)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(fadeAnim, {
+                toValue: 1,
+                duration: 600,
+                useNativeDriver: true,
+            }),
+            Animated.spring(slideAnim, {
+                toValue: 0,
+                friction: 8,
+                useNativeDriver: true,
+            })
+        ]).start();
+    }, []);
 
     // Timer
     useEffect(() => {
@@ -100,7 +119,6 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
             if (index !== null) {
                 setCurrentIdx(index);
                 // Also scroll pagination strip
-                // Center the active item: index * 48 (width+margin) - screenWidth/2 + itemWidth/2
                 if (paginationScrollRef.current) {
                     const itemSize = 48; // 38 width + 10 margin
                     const offset = (index * itemSize) - (width / 2) + (itemSize / 2);
@@ -131,7 +149,6 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                     <View style={styles.questionContainer}>
                         {/* Image Placeholder */}
                         <View style={[styles.imageContainer, isDark && styles.cardDark]}>
-                            {/* In real app, remove opacity or show actual image */}
                             <Ionicons name="image" size={50} color="#C7C7CC" />
                             <Text style={{ color: '#AAA', marginTop: 10, fontWeight: '500' }}>Rasm yuklanmadi</Text>
                         </View>
@@ -161,8 +178,6 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                                         labelStyle.push(styles.labelCorrect);
                                         labelTextStyle.push(styles.textWhite);
                                     }
-                                } else if (isSelected) {
-                                    // Active press state handled by TouchableOpacity usually
                                 }
 
                                 const letters = ['A', 'B', 'C', 'D'];
@@ -203,11 +218,25 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                     <Ionicons name="chevron-back" size={28} color={isDark ? '#FFF' : '#333'} />
                 </TouchableOpacity>
 
-                <View style={styles.timerBadge}>
-                    <Ionicons name="time" size={16} color={timeLeft < 60 ? '#FF3B30' : '#007AFF'} />
-                    <Text style={[styles.timerText, timeLeft < 60 && styles.textRed]}>
-                        {formatTime(timeLeft)}
-                    </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    {/* Timer */}
+                    <View style={styles.timerBadge}>
+                        <Ionicons name="time" size={16} color={timeLeft < 60 ? '#FF3B30' : '#007AFF'} />
+                        <Text style={[styles.timerText, timeLeft < 60 && styles.textRed]}>
+                            {formatTime(timeLeft)}
+                        </Text>
+                    </View>
+
+                    {/* Animated Result Circle */}
+                    <Animated.View style={[
+                        styles.resultBadge,
+                        isDark && styles.resultBadgeDark,
+                        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+                    ]}>
+                        <Text style={[styles.resultText, isDark && styles.textWhite]}>
+                            {Object.values(results).filter(r => r).length}/{questions.length}
+                        </Text>
+                    </Animated.View>
                 </View>
 
                 {answers[currentIdx] ? (
@@ -329,6 +358,23 @@ const styles = StyleSheet.create({
         paddingHorizontal: 14,
         paddingVertical: 6,
         borderRadius: 16,
+    },
+    resultBadge: {
+        backgroundColor: '#F2F2F7',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    resultBadgeDark: {
+        backgroundColor: '#3A3A3C',
+    },
+    resultText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#1C1C1E',
+        fontVariant: ['tabular-nums'],
     },
     timerText: {
         fontSize: 16,

@@ -46,7 +46,11 @@ export const TariflarScreen = () => {
     const { isDark } = useTheme();
 
     return (
-        <ScreenLayout edges={['left', 'right']}>
+        <ScreenLayout
+            edges={['top', 'left', 'right']}
+            title={t('tariflar')}
+            showBackButton={true}
+        >
             <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
                 {PLANS.map((plan) => (
                     <View key={plan.id} style={styles.planWrapper}>

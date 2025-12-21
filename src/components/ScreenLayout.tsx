@@ -14,22 +14,40 @@ interface ScreenLayoutProps {
     showBackButton?: boolean;
     title?: string;
     edges?: Edge[];
+    onSearch?: (text: string) => void;
 }
 
-export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, containerStyle, showBackButton, title, edges = ['top', 'bottom', 'left', 'right'] }) => {
+export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, containerStyle, showBackButton, title, edges = ['top', 'bottom', 'left', 'right'], onSearch }) => {
     const { isDark } = useTheme();
     const navigation = useNavigation();
     const { t } = useTranslation();
+    const [isSearchVisible, setSearchVisible] = React.useState(false);
+    const [searchText, setSearchText] = React.useState('');
 
     // Standard background colors
     const defaultBg = isDark ? '#1C1C1E' : '#F7F8FA';
     const containerBg = containerStyle?.backgroundColor || defaultBg;
 
+    const handleSearch = (text: string) => {
+        setSearchText(text);
+        if (onSearch) onSearch(text);
+    };
+
+    const toggleSearch = () => {
+        if (isSearchVisible) {
+            // Clear on close
+            handleSearch('');
+            setSearchVisible(false);
+        } else {
+            setSearchVisible(true);
+        }
+    };
+
     return (
         <SafeAreaView edges={edges} style={[styles.container, containerStyle, { backgroundColor: containerBg }]}>
             <StatusBar style={isDark ? "light" : "dark"} />
 
-            {(showBackButton || title) && (
+            {(showBackButton || title || onSearch) && (
                 <View style={[styles.topBar, isDark && styles.topBarDark]}>
                     <TouchableOpacity
                         style={styles.headerLeft}
@@ -45,7 +63,35 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, con
                         <Text style={[styles.headerTitle, isDark && styles.textWhite]}>{title}</Text>
                     </View>
 
-                    <View style={styles.headerRight} />
+                    <View style={styles.headerRight}>
+                        {onSearch && (
+                            <TouchableOpacity onPress={toggleSearch} style={styles.iconButton}>
+                                <Ionicons name={isSearchVisible ? "close" : "search"} size={24} color={isDark ? '#FFF' : '#000'} />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </View>
+            )}
+
+            {isSearchVisible && (
+                <View style={[styles.searchContainer, isDark && styles.searchContainerDark]}>
+                    <View style={[styles.searchInputWrapper, isDark && styles.searchInputWrapperDark]}>
+                        <Ionicons name="search" size={20} color="#8E8E93" style={styles.searchIcon} />
+                        <TextInput
+                            style={[styles.searchInput, isDark && styles.searchInputDark]}
+                            placeholder={t('search', 'Qidirish...')}
+                            placeholderTextColor="#8E8E93"
+                            value={searchText}
+                            onChangeText={handleSearch}
+                            autoFocus={true}
+                            returnKeyType="search"
+                        />
+                        {searchText.length > 0 && (
+                            <TouchableOpacity onPress={() => handleSearch('')}>
+                                <Ionicons name="close-circle" size={18} color="#8E8E93" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
                 </View>
             )}
 
@@ -55,6 +101,9 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, con
         </SafeAreaView>
     );
 };
+
+// Add import TextInput
+import { TextInput } from 'react-native';
 
 const styles = StyleSheet.create({
     container: {
@@ -90,12 +139,48 @@ const styles = StyleSheet.create({
     },
     headerRight: {
         width: 40,
+        alignItems: 'flex-end',
+    },
+    iconButton: {
+        padding: 4,
     },
     content: {
         flex: 1,
         paddingHorizontal: 0,
     },
     textWhite: {
+        color: '#FFF',
+    },
+    // Search Styles
+    searchContainer: {
+        paddingHorizontal: 16,
+        paddingBottom: 10,
+        backgroundColor: 'transparent',
+    },
+    searchContainerDark: {
+        backgroundColor: 'transparent',
+    },
+    searchInputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#E5E5EA',
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        height: 36,
+    },
+    searchInputWrapperDark: {
+        backgroundColor: '#3A3A3C',
+    },
+    searchIcon: {
+        marginRight: 6,
+    },
+    searchInput: {
+        flex: 1,
+        fontSize: 17,
+        color: '#000',
+        padding: 0, // Reset
+    },
+    searchInputDark: {
         color: '#FFF',
     },
 });

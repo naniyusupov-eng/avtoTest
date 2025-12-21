@@ -1,10 +1,12 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions, FlatList } from 'react-native';
+import React, { useRef, useCallback, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Dimensions, FlatList, Animated, Alert } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 4;
@@ -18,12 +20,48 @@ export const TicketsScreen = ({ navigation }: any) => {
     const { isDark } = useTheme();
     const tickets = Array.from({ length: 120 }, (_, i) => i + 1);
 
-    // Mock Progress
-    const solvedTickets = [1, 2, 3];
-    const currentTicket = 4;
+    // Progress State
+    const [solvedTickets, setSolvedTickets] = useState<number[]>([1, 2, 3]);
+    const [filterText, setFilterText] = useState('');
+
+    // Determine next ticket automatically
+    const currentTicket = solvedTickets.length + 1;
     const progress = solvedTickets.length / 120;
 
+    const filteredTickets = tickets.filter(t => t.toString().includes(filterText));
+
+    // Animations
+    const fillAnim = useRef(new Animated.Value(0)).current;
+
+    useFocusEffect(
+        useCallback(() => {
+            fillAnim.setValue(0);
+            Animated.timing(fillAnim, {
+                toValue: progress,
+                duration: 1000,
+                delay: 200,
+                useNativeDriver: false,
+            }).start();
+        }, [progress])
+    );
+
+    const handleReset = () => {
+        Alert.alert(
+            t('reset_progress', 'Natijani tozalash'),
+            t('reset_confirm', 'Barcha natijalar ochib ketadi. Davom etasizmi?'),
+            [
+                { text: t('cancel', 'Bekor qilish'), style: 'cancel' },
+                {
+                    text: t('reset', 'Tozalash'),
+                    style: 'destructive',
+                    onPress: () => setSolvedTickets([])
+                }
+            ]
+        );
+    };
+
     const renderTicket = ({ item, index }: { item: number; index: number }) => {
+        // Use index for layout if needed, but flex wrap handles it mostly.
         const isLastInRow = (index + 1) % COLUMN_COUNT === 0;
         const isSolved = solvedTickets.includes(item);
         const isCurrent = item === currentTicket;
@@ -61,23 +99,47 @@ export const TicketsScreen = ({ navigation }: any) => {
 
     const renderHeader = () => (
         <View style={styles.headerContainer}>
-            {/* Progress Dashboard */}
-            <View style={[styles.progressCard, isDark && styles.cardDark]}>
-                <View style={styles.progressRow}>
-                    <View style={{ flex: 1 }}>
-                        <Text style={[styles.progressTitle, isDark && styles.textWhite]}>{t('your_progress')}</Text>
-                        <Text style={[styles.progressSubtitle, isDark && styles.textGray]}>
+            <LinearGradient
+                colors={isDark ? ['#1C1C1E', '#2C2C2E'] : ['#007AFF', '#00C7BE']}
+                style={[styles.progressCard, isDark && styles.cardDark]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+            >
+                {/* Top Row: Title + Reset */}
+                <View style={styles.cardHeader}>
+                    <View>
+                        <Text style={styles.cardTitle}>{t('your_progress')}</Text>
+                        <Text style={styles.cardSubtitle}>
                             {solvedTickets.length} / 120 {t('tickets_solved')}
                         </Text>
                     </View>
-                    <View style={[styles.circularProgress, isDark && styles.circularProgressDark]}>
-                        <Text style={[styles.percentageText, isDark && styles.textWhite]}>{Math.round(progress * 100)}%</Text>
+                    <TouchableOpacity
+                        style={styles.resetButton}
+                        onPress={handleReset}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="trash-outline" size={20} color="rgba(255,255,255,0.9)" />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Middle: Big Percentage + Bar */}
+                <View style={styles.statsContainer}>
+                    <Text style={styles.bigPercentage}>
+                        {Math.round(progress * 100)}%
+                    </Text>
+                    <View style={styles.progressBarBg}>
+                        <Animated.View style={[
+                            styles.progressBarFill,
+                            {
+                                width: fillAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: ['0%', '100%']
+                                })
+                            }
+                        ]} />
                     </View>
                 </View>
-                <View style={styles.progressBarBg}>
-                    <View style={[styles.progressBarFill, { width: `${progress * 100}%` }]} />
-                </View>
-            </View>
+            </LinearGradient>
         </View>
     );
 
@@ -86,9 +148,10 @@ export const TicketsScreen = ({ navigation }: any) => {
             edges={['top', 'left', 'right']}
             title={t('tickets')}
             style={styles.container}
+            onSearch={setFilterText}
         >
             <FlatList
-                data={tickets}
+                data={filteredTickets}
                 renderItem={renderTicket}
                 keyExtractor={(item) => item.toString()}
                 numColumns={COLUMN_COUNT}
@@ -103,7 +166,6 @@ export const TicketsScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        // backgroundColor removed to inherit from ScreenLayout (which handles Theme)
     },
     ticketsGrid: {
         padding: GRID_PADDING,
@@ -115,62 +177,63 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     progressCard: {
-        backgroundColor: '#FFF',
-        borderRadius: 20,
-        padding: 20,
+        borderRadius: 24,
+        padding: 24,
         marginBottom: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 3,
+        shadowColor: '#007AFF',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.25,
+        shadowRadius: 16,
+        elevation: 6,
     },
     cardDark: {
-        backgroundColor: '#2C2C2E',
+        shadowColor: '#000',
     },
-    progressRow: {
+    cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
+        alignItems: 'flex-start',
+        marginBottom: 20,
     },
-    progressTitle: {
+    cardTitle: {
         fontSize: 18,
-        fontWeight: '700',
-        color: '#1C1C1E',
+        fontWeight: 'bold',
+        color: '#FFF',
         marginBottom: 4,
     },
-    progressSubtitle: {
+    cardSubtitle: {
         fontSize: 14,
-        color: '#8E8E93',
+        color: 'rgba(255,255,255,0.8)',
         fontWeight: '500',
     },
-    circularProgress: {
-        width: 46,
-        height: 46,
-        borderRadius: 23,
-        backgroundColor: '#F2F2F7',
+    resetButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255,255,255,0.2)',
         justifyContent: 'center',
         alignItems: 'center',
     },
-    circularProgressDark: {
-        backgroundColor: '#3A3A3C',
+    statsContainer: {
+        marginTop: 8,
     },
-    percentageText: {
-        fontSize: 14,
+    bigPercentage: {
+        fontSize: 42,
         fontWeight: '800',
-        color: '#007AFF',
+        color: '#FFF',
+        marginBottom: 12,
+        letterSpacing: -1,
     },
     progressBarBg: {
-        height: 6,
-        backgroundColor: '#F2F2F7',
-        borderRadius: 3,
+        height: 8,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: 4,
         overflow: 'hidden',
     },
     progressBarFill: {
         height: '100%',
-        backgroundColor: '#34C759',
-        borderRadius: 3,
+        backgroundColor: '#FFF',
+        borderRadius: 4,
     },
     ticketItem: {
         backgroundColor: '#FFF',
@@ -183,9 +246,12 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.03,
         shadowRadius: 4,
         elevation: 1,
+        borderWidth: 1,
+        borderColor: '#F2F2F7',
     },
     ticketItemDark: {
         backgroundColor: '#2C2C2E',
+        borderColor: '#3A3A3C',
         shadowOpacity: 0.2,
     },
     ticketCurrent: {
@@ -222,9 +288,6 @@ const styles = StyleSheet.create({
     },
     textWhite: {
         color: '#FFF',
-    },
-    textGray: {
-        color: '#AEAEB2',
     },
     textGreen: {
         color: '#34C759',

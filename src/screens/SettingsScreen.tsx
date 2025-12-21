@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Switch, ScrollView, Share, Linking } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Switch, ScrollView, Share, Linking, Modal, Pressable } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import TariffsSection from './TariffsSection';
 import { useFontSize } from '../context/FontSizeContext';
-import { FontSizeModal } from '../components/FontSizeModal';
+import Slider from '@react-native-community/slider';
 
 interface SettingItemProps {
     icon: keyof typeof Ionicons.glyphMap;
@@ -16,14 +16,15 @@ interface SettingItemProps {
     onPress?: () => void;
     rightElement?: React.ReactNode;
     color?: string; // Icon Background Color
+    style?: any;
 }
 
-const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onPress, rightElement, color = '#007AFF' }) => {
+const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onPress, rightElement, color = '#007AFF', style }) => {
     const { isDark } = useTheme();
 
     return (
         <TouchableOpacity
-            style={[styles.item, isDark && styles.itemDark]}
+            style={[styles.item, isDark && styles.itemDark, style]}
             onPress={onPress}
             disabled={!onPress}
             activeOpacity={0.6}
@@ -45,12 +46,25 @@ const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onP
 export default function SettingsScreen({ navigation }: any) {
     const { t, i18n } = useTranslation();
     const { isDark, toggleTheme } = useTheme();
-    const { fontSize } = useFontSize();
+    const { fontSize, setFontSize } = useFontSize();
     const [isFontModalVisible, setFontModalVisible] = useState(false);
+
+    // Centered Modal State for Language
+    const [isLangModalVisible, setLangModalVisible] = useState(false);
+
     const [notifications, setNotifications] = useState(true);
+
+    const LANGUAGES = [
+        { code: 'uz', label: "O'zbekcha", flag: '🇺🇿' },
+        { code: 'uz_cyrl', label: "Ўзбекча (Кирилл)", flag: '🇺🇿' },
+        { code: 'ru', label: "Русский", flag: '🇷🇺' },
+    ];
+
+    const currentLangLabel = LANGUAGES.find(l => l.code === i18n.language)?.label || "O'zbekcha";
 
     const setLanguage = (lang: string) => {
         i18n.changeLanguage(lang);
+        setLangModalVisible(false);
     };
 
     const handleShare = async () => {
@@ -87,51 +101,24 @@ export default function SettingsScreen({ navigation }: any) {
                     <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('app_settings')}</Text>
                     <View style={[styles.card, isDark && styles.cardDark]}>
 
+                        {/* Language */}
                         <SettingItem
                             icon="language"
                             label={t('language')}
                             color="#007AFF"
+                            onPress={() => setLangModalVisible(true)}
                             rightElement={
-                                <View style={[styles.langToggleContainer, isDark && styles.langToggleContainerDark]}>
-                                    <TouchableOpacity
-                                        onPress={() => setLanguage('uz')}
-                                        style={[
-                                            styles.langOption,
-                                            i18n.language === 'uz' && styles.langOptionActive
-                                        ]}
-                                    >
-                                        <Text style={[
-                                            styles.langOptionText,
-                                            i18n.language === 'uz' && styles.langOptionTextActive
-                                        ]}>UZ</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={() => setLanguage('uz_cyrl')}
-                                        style={[
-                                            styles.langOption,
-                                            i18n.language === 'uz_cyrl' && styles.langOptionActive
-                                        ]}
-                                    >
-                                        <Text style={[
-                                            styles.langOptionText,
-                                            i18n.language === 'uz_cyrl' && styles.langOptionTextActive
-                                        ]}>ЎЗ</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={() => setLanguage('ru')}
-                                        style={[
-                                            styles.langOption,
-                                            i18n.language === 'ru' && styles.langOptionActive
-                                        ]}
-                                    >
-                                        <Text style={[
-                                            styles.langOptionText,
-                                            i18n.language === 'ru' && styles.langOptionTextActive
-                                        ]}>RU</Text>
-                                    </TouchableOpacity>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Text style={{ color: '#8E8E93', fontSize: 17, marginRight: 6 }}>{currentLangLabel}</Text>
+                                    <Ionicons
+                                        name="chevron-forward"
+                                        size={18}
+                                        color="#C7C7CC"
+                                    />
                                 </View>
                             }
                         />
+
                         <View style={[styles.separator, isDark && styles.separatorDark]} />
                         <SettingItem
                             icon="notifications"
@@ -177,7 +164,87 @@ export default function SettingsScreen({ navigation }: any) {
                     </View>
                 </View>
 
-                <FontSizeModal visible={isFontModalVisible} onClose={() => setFontModalVisible(false)} />
+                {/* Centered Modal: Language */}
+                <Modal
+                    visible={isLangModalVisible}
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={() => setLangModalVisible(false)}
+                >
+                    <Pressable style={styles.modalOverlay} onPress={() => setLangModalVisible(false)}>
+                        <Pressable style={[styles.modalContent, isDark && styles.modalContentDark]}>
+                            <Text style={[styles.modalTitle, isDark && styles.textWhite]}>{t('select_language')}</Text>
+
+                            {LANGUAGES.map((lang, index) => (
+                                <View key={lang.code}>
+                                    <TouchableOpacity
+                                        style={styles.langItem}
+                                        onPress={() => setLanguage(lang.code)}
+                                    >
+                                        <Text style={styles.langFlag}>{lang.flag}</Text>
+                                        <Text style={[
+                                            styles.langLabel,
+                                            isDark && styles.textWhite,
+                                            i18n.language === lang.code && styles.langLabelActive
+                                        ]}>
+                                            {lang.label}
+                                        </Text>
+                                        {i18n.language === lang.code && (
+                                            <Ionicons name="checkmark" size={24} color="#007AFF" />
+                                        )}
+                                    </TouchableOpacity>
+                                    {index < LANGUAGES.length - 1 && (
+                                        <View style={[styles.modalSeparator, isDark && styles.modalSeparatorDark]} />
+                                    )}
+                                </View>
+                            ))}
+
+                            <TouchableOpacity style={styles.closeButton} onPress={() => setLangModalVisible(false)}>
+                                <Text style={styles.closeButtonText}>{t('cancel')}</Text>
+                            </TouchableOpacity>
+                        </Pressable>
+                    </Pressable>
+                </Modal>
+
+                {/* Centered Modal: Font Size */}
+                <Modal
+                    visible={isFontModalVisible}
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={() => setFontModalVisible(false)}
+                >
+                    <Pressable style={styles.modalOverlay} onPress={() => setFontModalVisible(false)}>
+                        <Pressable style={[styles.modalContent, isDark && styles.modalContentDark]}>
+                            <Text style={[styles.modalTitle, isDark && styles.textWhite]}>{t('font_size')}</Text>
+
+                            <Text style={{ textAlign: 'center', fontSize: 24, fontWeight: 'bold', marginBottom: 20, color: isDark ? '#FFF' : '#000' }}>
+                                {fontSize} px
+                            </Text>
+
+                            <View style={styles.sliderContainer}>
+                                <View style={styles.iconRow}>
+                                    <Ionicons name="text" size={16} color={isDark ? "#FFF" : "#000"} />
+                                    <Ionicons name="text" size={28} color={isDark ? "#FFF" : "#000"} />
+                                </View>
+                                <Slider
+                                    style={{ width: '100%', height: 40 }}
+                                    minimumValue={12}
+                                    maximumValue={30}
+                                    step={1}
+                                    value={fontSize}
+                                    onValueChange={setFontSize}
+                                    minimumTrackTintColor="#007AFF"
+                                    maximumTrackTintColor={isDark ? "#555" : "#CCC"}
+                                    thumbTintColor="#007AFF"
+                                />
+                            </View>
+
+                            <TouchableOpacity style={styles.closeButton} onPress={() => setFontModalVisible(false)}>
+                                <Text style={styles.closeButtonText}>{t('cancel')}</Text>
+                            </TouchableOpacity>
+                        </Pressable>
+                    </Pressable>
+                </Modal>
 
                 <View style={styles.section}>
                     <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('support')}</Text>
@@ -239,7 +306,7 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         color: '#6E6E73',
         marginBottom: 8,
-        marginLeft: 32, // Indent for inset
+        marginLeft: 32,
         textTransform: 'uppercase',
     },
     card: {
@@ -289,39 +356,92 @@ const styles = StyleSheet.create({
     separator: {
         height: StyleSheet.hairlineWidth,
         backgroundColor: '#C6C6C8',
-        marginLeft: 58, // 16 (pad) + 28 (icon) + 14 (margin) = 58
+        marginLeft: 58,
     },
     separatorDark: {
         backgroundColor: '#38383A',
     },
-    langToggleContainer: {
-        flexDirection: 'row',
-        backgroundColor: '#E9E9EB',
-        borderRadius: 8,
-        padding: 2,
+    // Center Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center', // Centered
+        alignItems: 'center',
     },
-    langToggleContainerDark: {
-        backgroundColor: '#3A3A3C',
-    },
-    langOption: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 6,
-    },
-    langOptionActive: {
+    modalContent: {
+        width: '85%',
+        maxWidth: 340,
         backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 24,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+        elevation: 10,
+    },
+    modalContentDark: {
+        backgroundColor: '#1C1C1E',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 1,
-        elevation: 1,
+        shadowOpacity: 0.5,
     },
-    langOptionText: {
-        fontSize: 13,
-        fontWeight: '600',
-        color: '#8E8E93',
-    },
-    langOptionTextActive: {
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
         color: '#000',
-    }
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    langItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 14,
+    },
+    langFlag: {
+        fontSize: 24,
+        marginRight: 16,
+    },
+    langLabel: {
+        fontSize: 17,
+        color: '#000',
+        flex: 1,
+    },
+    langLabelActive: {
+        color: '#007AFF',
+        fontWeight: '600',
+    },
+    modalSeparator: {
+        height: StyleSheet.hairlineWidth,
+        backgroundColor: '#E5E5EA',
+    },
+    modalSeparatorDark: {
+        backgroundColor: '#38383A',
+    },
+    closeButton: {
+        marginTop: 20,
+        alignItems: 'center',
+        paddingVertical: 12,
+        backgroundColor: '#F2F2F7',
+        borderRadius: 12,
+    },
+    closeButtonText: {
+        fontSize: 17,
+        fontWeight: '600',
+        color: '#000',
+    },
+    // Slider Styles
+    sliderContainer: {
+        width: '100%',
+        marginBottom: 10,
+    },
+    iconRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+        paddingHorizontal: 8,
+    },
 });

@@ -10,6 +10,7 @@ import SignsListScreen from '../screens/SignsListScreen';
 import TariflarScreen from '../screens/TariflarScreen';
 import ComingSoonScreen from '../screens/ComingSoonScreen';
 import RuleDetailScreen from '../screens/RuleDetailScreen';
+import LanguageScreen from '../screens/LanguageScreen';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 
@@ -100,6 +101,14 @@ export default function RootNavigation() {
                         options={{
                             ...commonHeaderOptions,
                             title: t('rules'),
+                        }}
+                    />
+                    <Stack.Screen
+                        name="Language"
+                        component={LanguageScreen}
+                        options={{
+                            ...commonHeaderOptions,
+                            title: t('language'),
                         }}
                     />
                 </Stack.Navigator>

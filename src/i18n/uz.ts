@@ -43,7 +43,6 @@ export default {
         traffic_lights_signals: 'Svetoforlar va tartibga soluvchining ishoralari',
         vehicle_signs: 'Transport vositalarining taniqli belgilari',
         danger_signs: 'Xavflilik belgilar',
-        coming_soon: 'Tez orada...',
         chapter_1: '1-bob. Umumiy qoidalar',
         chapter_2: '2-bob. Haydovchilarning umumiy majburiyatlari',
         chapter_3: '3-bob. Piyodalarning umumiy majburiyatlari',
@@ -102,5 +101,10 @@ export default {
         exam_finished: 'Imtihon yakunlandi',
         select_ticket_title: 'Imtihon biletlari',
         total_tickets: 'Jami {{count}} ta bilet',
+        cancel: 'Bekor qilish',
+        select_language: 'Tilni tanlang',
+        reset_progress: 'Natijani tozalash',
+        reset_confirm: 'Barcha natijalar ochib ketadi. Davom etasizmi?',
+        reset: 'Tozalash',
     },
 };

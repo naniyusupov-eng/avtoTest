@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
@@ -15,7 +15,16 @@ export const SignsListScreen = ({ route }: any) => {
     const { t } = useTranslation();
     const { isDark } = useTheme();
 
+    const [filterText, setFilterText] = useState('');
+
     const signs = SIGNS_DATA.filter(sign => sign.category === categoryId);
+
+    const filteredSigns = signs.filter(item => {
+        const name = (t(item.name_key) || item.name_uz || '').toLowerCase();
+        const code = (item.code || '').toLowerCase();
+        const search = filterText.toLowerCase();
+        return name.includes(search) || code.includes(search);
+    });
 
     const renderItem = ({ item }: any) => (
         <TouchableOpacity style={[styles.itemContainer, isDark && styles.itemContainerDark]}>
@@ -37,7 +46,12 @@ export const SignsListScreen = ({ route }: any) => {
     );
 
     return (
-        <ScreenLayout edges={['top', 'left', 'right']} title={title} showBackButton={true}>
+        <ScreenLayout
+            edges={['top', 'left', 'right']}
+            title={title}
+            showBackButton={true}
+            onSearch={setFilterText}
+        >
             <View style={styles.container}>
                 {signs.length === 0 ? (
                     <View style={styles.emptyContainer}>
@@ -47,12 +61,19 @@ export const SignsListScreen = ({ route }: any) => {
                     </View>
                 ) : (
                     <FlatList
-                        data={signs}
+                        data={filteredSigns}
                         keyExtractor={(item) => item.id}
                         renderItem={renderItem}
                         contentContainerStyle={styles.listContent}
                         numColumns={COLUMN_COUNT}
                         showsVerticalScrollIndicator={false}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={[styles.emptyText, isDark && styles.textWhite, { marginTop: 40 }]}>
+                                    {t('nothing_found', 'Hech narsa topilmadi')}
+                                </Text>
+                            </View>
+                        }
                     />
                 )}
             </View>
