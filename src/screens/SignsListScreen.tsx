@@ -7,8 +7,11 @@ import { useTheme } from '../context/ThemeContext';
 import { SIGNS_DATA } from '../data/signs_content';
 
 const { width } = Dimensions.get('window');
-const COLUMN_COUNT = 3;
-const ITEM_WIDTH = (width - 48) / COLUMN_COUNT;
+const COLUMN_COUNT = 2; // Switched to 2 columns for better visibility
+const GAP = 12; // Gap between items
+const PADDING = 16;
+// Calculate item width accounting for padding and gap
+const ITEM_WIDTH = (width - (PADDING * 2) - (GAP * (COLUMN_COUNT - 1))) / COLUMN_COUNT;
 
 export const SignsListScreen = ({ route }: any) => {
     const { categoryId, title } = route.params;
@@ -26,24 +29,43 @@ export const SignsListScreen = ({ route }: any) => {
         return name.includes(search) || code.includes(search);
     });
 
-    const renderItem = ({ item }: any) => (
-        <TouchableOpacity style={[styles.itemContainer, isDark && styles.itemContainerDark]}>
-            <View style={[styles.imageContainer, isDark && styles.imageContainerDark]}>
-                <Image
-                    source={{ uri: item.image_url }}
-                    style={styles.image}
-                    resizeMode="contain"
-                />
-            </View>
-            <Text style={[styles.code, isDark && styles.textGray]}>{item.code}</Text>
-            <Text
-                style={[styles.name, isDark && styles.textWhite]}
-                numberOfLines={3}
+    const renderItem = ({ item, index }: any) => {
+        // Adjust gap logic if needed, or use columnWrapperStyle GAP
+
+        return (
+            <TouchableOpacity
+                style={[
+                    styles.itemCard,
+                    isDark && styles.itemCardDark,
+                    { width: ITEM_WIDTH } // Explicit width
+                ]}
+                activeOpacity={0.8}
             >
-                {t(item.name_key) || item.name_uz}
-            </Text>
-        </TouchableOpacity>
-    );
+                <View style={styles.headerRow}>
+                    <View style={[styles.codeBadge, isDark && styles.codeBadgeDark]}>
+                        <Text style={[styles.codeText, isDark && styles.codeTextDark]}>{item.code}</Text>
+                    </View>
+                </View>
+
+                <View style={styles.imageWrapper}>
+                    <Image
+                        source={{ uri: item.image_url }}
+                        style={styles.image}
+                        resizeMode="contain"
+                    />
+                </View>
+
+                <View style={styles.infoContainer}>
+                    <Text
+                        style={[styles.nameText, isDark && styles.textWhite]}
+                        numberOfLines={3}
+                    >
+                        {t(item.name_key) || item.name_uz}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <ScreenLayout
@@ -67,6 +89,7 @@ export const SignsListScreen = ({ route }: any) => {
                         contentContainerStyle={styles.listContent}
                         numColumns={COLUMN_COUNT}
                         showsVerticalScrollIndicator={false}
+                        columnWrapperStyle={{ justifyContent: 'space-between' }}
                         ListEmptyComponent={
                             <View style={styles.emptyContainer}>
                                 <Text style={[styles.emptyText, isDark && styles.textWhite, { marginTop: 40 }]}>
@@ -86,44 +109,74 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     listContent: {
-        padding: 16,
+        padding: PADDING,
+        paddingBottom: 40,
+        gap: GAP, // RN 0.71+ supports gap in List? columnWrapperStyle handles horizontal. Vertical gap needs explicit style or ItemSeparatorComponent.
+        // Actually FlatList 'gap' prop isn't fully standard yet on all versions, better use marginBottom on item.
     },
-    itemContainer: {
-        width: ITEM_WIDTH,
-        marginRight: 8,
-        marginBottom: 16,
+    itemCard: {
+        backgroundColor: '#FFF',
+        borderRadius: 20,
+        padding: 12,
+        marginBottom: GAP,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: 'rgba(0,0,0,0.03)',
         alignItems: 'center',
     },
-    itemContainerDark: {
-        // Optional
+    itemCardDark: {
+        backgroundColor: '#2C2C2E',
+        borderColor: '#3A3A3C',
+        shadowOpacity: 0.2,
     },
-    imageContainer: {
-        width: ITEM_WIDTH,
-        height: ITEM_WIDTH,
+    headerRow: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+        marginBottom: 8,
+    },
+    codeBadge: {
+        backgroundColor: '#F2F2F7',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    codeBadgeDark: {
+        backgroundColor: '#3A3A3C',
+    },
+    codeText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: '#8E8E93',
+    },
+    codeTextDark: {
+        color: '#AEAEB2',
+    },
+    imageWrapper: {
+        width: '100%',
+        aspectRatio: 1.1, // Slightly taller than wide or square
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 8,
-        backgroundColor: '#F2F2F7',
-        borderRadius: 8,
-        padding: 4,
-    },
-    imageContainerDark: {
-        backgroundColor: '#2C2C2E',
+        marginBottom: 12,
     },
     image: {
+        width: '90%',
+        height: '90%',
+    },
+    infoContainer: {
         width: '100%',
-        height: '100%',
+        alignItems: 'center',
     },
-    code: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        marginBottom: 4,
-        color: '#666',
-    },
-    name: {
-        fontSize: 11,
+    nameText: {
+        fontSize: 14,
+        fontWeight: '600',
         textAlign: 'center',
-        color: '#000',
+        color: '#1C1C1E',
+        lineHeight: 18,
     },
     emptyContainer: {
         flex: 1,
@@ -138,9 +191,6 @@ const styles = StyleSheet.create({
     },
     textWhite: {
         color: '#FFF',
-    },
-    textGray: {
-        color: '#AAA',
     },
 });
 

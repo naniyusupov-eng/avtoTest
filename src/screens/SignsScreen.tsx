@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
@@ -28,6 +28,14 @@ const MARKING_CATEGORIES = [
 export const SignsScreen = ({ navigation }: any) => {
     const { t } = useTranslation();
     const { isDark } = useTheme();
+    const [filterText, setFilterText] = useState('');
+
+    const filterCategories = (categories: typeof SIGN_CATEGORIES) => {
+        return categories.filter(c => t(c.titleKey).toLowerCase().includes(filterText.toLowerCase()));
+    };
+
+    const filteredSignCategories = filterCategories(SIGN_CATEGORIES);
+    const filteredMarkingCategories = filterCategories(MARKING_CATEGORIES);
 
     const renderCategory = (item: any) => (
         <TouchableOpacity
@@ -51,15 +59,34 @@ export const SignsScreen = ({ navigation }: any) => {
         <ScreenLayout
             edges={['top', 'left', 'right']}
             title={t('signs')}
+            onSearch={setFilterText}
         >
             <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-                <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('road_signs')}</Text>
-                {SIGN_CATEGORIES.map(renderCategory)}
+                {filteredSignCategories.length > 0 && (
+                    <>
+                        <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('road_signs')}</Text>
+                        {filteredSignCategories.map(renderCategory)}
+                    </>
+                )}
 
-                <View style={styles.divider} />
+                {filteredSignCategories.length > 0 && filteredMarkingCategories.length > 0 && (
+                    <View style={styles.divider} />
+                )}
 
-                <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('road_markings')}</Text>
-                {MARKING_CATEGORIES.map(renderCategory)}
+                {filteredMarkingCategories.length > 0 && (
+                    <>
+                        <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('road_markings')}</Text>
+                        {filteredMarkingCategories.map(renderCategory)}
+                    </>
+                )}
+
+                {filteredSignCategories.length === 0 && filteredMarkingCategories.length === 0 && (
+                    <View style={styles.emptyContainer}>
+                        <Text style={[styles.emptyText, isDark && styles.textWhite]}>
+                            {t('nothing_found', 'Hech narsa topilmadi')}
+                        </Text>
+                    </View>
+                )}
             </ScrollView>
         </ScreenLayout>
     );
@@ -124,6 +151,18 @@ const styles = StyleSheet.create({
     },
     textWhite: {
         color: '#FFF',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        marginTop: 40,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: '#8E8E93',
+        textAlign: 'center',
     },
 });
 

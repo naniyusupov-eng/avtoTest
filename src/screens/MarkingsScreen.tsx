@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,11 +13,20 @@ const MARKING_CATEGORIES = [
 export const MarkingsScreen = ({ navigation }: any) => {
     const { t } = useTranslation();
     const { isDark } = useTheme();
+    const [filterText, setFilterText] = useState('');
+
+    const filteredCategories = MARKING_CATEGORIES.filter(c =>
+        t(c.titleKey).toLowerCase().includes(filterText.toLowerCase())
+    );
 
     return (
-        <ScreenLayout edges={['left', 'right']}>
+        <ScreenLayout
+            edges={['top', 'left', 'right']}
+            title={t('road_markings', 'Yoʻl chiziqlari')}
+            onSearch={setFilterText}
+        >
             <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-                {MARKING_CATEGORIES.map((category) => (
+                {filteredCategories.map((category) => (
                     <TouchableOpacity
                         key={category.id}
                         style={[styles.categoryCard, isDark && styles.cardDark]}

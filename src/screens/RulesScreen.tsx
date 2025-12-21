@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
@@ -41,6 +41,12 @@ const CHAPTERS = [
 export const RulesScreen = ({ navigation }: any) => {
     const { t } = useTranslation();
     const { isDark } = useTheme();
+    const [filterText, setFilterText] = useState('');
+
+    const filteredChapters = CHAPTERS.filter(item => {
+        const title = t(item.key).toLowerCase();
+        return title.includes(filterText.toLowerCase()) || item.id.toString().includes(filterText);
+    });
 
     const renderChapter = ({ item }: any) => (
         <TouchableOpacity
@@ -67,13 +73,21 @@ export const RulesScreen = ({ navigation }: any) => {
         <ScreenLayout
             edges={['top', 'left', 'right']}
             title={t('rules')}
+            onSearch={setFilterText}
         >
             <FlatList
-                data={CHAPTERS}
+                data={filteredChapters}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={renderChapter}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
+                ListEmptyComponent={
+                    <View style={styles.emptyContainer}>
+                        <Text style={[styles.emptyText, isDark && styles.textWhite]}>
+                            {t('nothing_found', 'Hech narsa topilmadi')}
+                        </Text>
+                    </View>
+                }
             />
         </ScreenLayout>
     );
@@ -136,6 +150,18 @@ const styles = StyleSheet.create({
     },
     textWhite: {
         color: '#FFF',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        marginTop: 40,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: '#8E8E93',
+        textAlign: 'center',
     },
 });
 

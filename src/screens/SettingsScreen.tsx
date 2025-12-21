@@ -49,10 +49,10 @@ export default function SettingsScreen({ navigation }: any) {
     const { fontSize, setFontSize } = useFontSize();
     const [isFontModalVisible, setFontModalVisible] = useState(false);
 
-    // Centered Modal State for Language
     const [isLangModalVisible, setLangModalVisible] = useState(false);
 
     const [notifications, setNotifications] = useState(true);
+    const [filterText, setFilterText] = useState('');
 
     const LANGUAGES = [
         { code: 'uz', label: "O'zbekcha", flag: '🇺🇿' },
@@ -82,87 +82,121 @@ export default function SettingsScreen({ navigation }: any) {
         Linking.openURL('https://t.me/your_support_bot');
     };
 
+    // Helper for visibility
+    const isVisible = (text: string) => text.toLowerCase().includes(filterText.toLowerCase());
+
+    const showLanguage = isVisible(t('language'));
+    const showNotifications = isVisible(t('notifications'));
+    const showDarkMode = isVisible(t('dark_mode'));
+    const showFontSize = isVisible(t('font_size'));
+    const showAppSettings = showLanguage || showNotifications || showDarkMode || showFontSize;
+
+    const showHelp = isVisible(t('help_support'));
+    const showRate = isVisible(t('rate_us'));
+    const showShare = isVisible(t('share_app'));
+    const showSupportSection = showHelp || showRate || showShare;
+
+    const showVersion = isVisible(t('version')) || isVisible(t('about'));
+    const showAboutSection = showVersion;
+
+    const showTariffs = isVisible(t('tariflar')) || isVisible('Premium'); // Basic check
+
     return (
         <ScreenLayout
             edges={['top', 'left', 'right']}
             title={t('settings')}
+            onSearch={setFilterText}
         >
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 style={[styles.scrollView, isDark && styles.scrollViewDark]}
                 contentContainerStyle={{ paddingBottom: 100, paddingTop: 16 }}
             >
-                {/* Tariffs usually distinct */}
-                <View style={{ marginBottom: 24 }}>
-                    <TariffsSection navigation={navigation} />
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('app_settings')}</Text>
-                    <View style={[styles.card, isDark && styles.cardDark]}>
-
-                        {/* Language */}
-                        <SettingItem
-                            icon="language"
-                            label={t('language')}
-                            color="#007AFF"
-                            onPress={() => setLangModalVisible(true)}
-                            rightElement={
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Text style={{ color: '#8E8E93', fontSize: 17, marginRight: 6 }}>{currentLangLabel}</Text>
-                                    <Ionicons
-                                        name="chevron-forward"
-                                        size={18}
-                                        color="#C7C7CC"
-                                    />
-                                </View>
-                            }
-                        />
-
-                        <View style={[styles.separator, isDark && styles.separatorDark]} />
-                        <SettingItem
-                            icon="notifications"
-                            label={t('notifications')}
-                            color="#FF9500"
-                            rightElement={
-                                <Switch
-                                    value={notifications}
-                                    onValueChange={setNotifications}
-                                    trackColor={{ false: '#767577', true: '#34C759' }}
-                                    thumbColor="#f4f3f4"
-                                />
-                            }
-                        />
-                        <View style={[styles.separator, isDark && styles.separatorDark]} />
-
-                        <SettingItem
-                            icon="moon"
-                            label={t('dark_mode')}
-                            color="#5856D6"
-                            rightElement={
-                                <Switch
-                                    value={isDark}
-                                    onValueChange={toggleTheme}
-                                    trackColor={{ false: '#767577', true: '#34C759' }}
-                                    thumbColor="#f4f3f4"
-                                />
-                            }
-                        />
-                        <View style={[styles.separator, isDark && styles.separatorDark]} />
-                        <SettingItem
-                            icon="text"
-                            label={t('font_size')}
-                            color="#00C7BE"
-                            onPress={() => setFontModalVisible(true)}
-                            rightElement={
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Text style={{ color: '#8E8E93', fontSize: 17, marginRight: 6 }}>{fontSize}px</Text>
-                                    <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
-                                </View>
-                            }
-                        />
+                {/* Tariffs */}
+                {showTariffs && (
+                    <View style={{ marginBottom: 24 }}>
+                        <TariffsSection navigation={navigation} />
                     </View>
-                </View>
+                )}
+
+                {showAppSettings && (
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('app_settings')}</Text>
+                        <View style={[styles.card, isDark && styles.cardDark]}>
+
+                            {showLanguage && (
+                                <>
+                                    <SettingItem
+                                        icon="language"
+                                        label={t('language')}
+                                        color="#007AFF"
+                                        onPress={() => setLangModalVisible(true)}
+                                        rightElement={
+                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                <Text style={{ color: '#8E8E93', fontSize: 17, marginRight: 6 }}>{currentLangLabel}</Text>
+                                                <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                            </View>
+                                        }
+                                    />
+                                    {(showNotifications || showDarkMode || showFontSize) && <View style={[styles.separator, isDark && styles.separatorDark]} />}
+                                </>
+                            )}
+
+                            {showNotifications && (
+                                <>
+                                    <SettingItem
+                                        icon="notifications"
+                                        label={t('notifications')}
+                                        color="#FF9500"
+                                        rightElement={
+                                            <Switch
+                                                value={notifications}
+                                                onValueChange={setNotifications}
+                                                trackColor={{ false: '#767577', true: '#34C759' }}
+                                                thumbColor="#f4f3f4"
+                                            />
+                                        }
+                                    />
+                                    {(showDarkMode || showFontSize) && <View style={[styles.separator, isDark && styles.separatorDark]} />}
+                                </>
+                            )}
+
+                            {showDarkMode && (
+                                <>
+                                    <SettingItem
+                                        icon="moon"
+                                        label={t('dark_mode')}
+                                        color="#5856D6"
+                                        rightElement={
+                                            <Switch
+                                                value={isDark}
+                                                onValueChange={toggleTheme}
+                                                trackColor={{ false: '#767577', true: '#34C759' }}
+                                                thumbColor="#f4f3f4"
+                                            />
+                                        }
+                                    />
+                                    {showFontSize && <View style={[styles.separator, isDark && styles.separatorDark]} />}
+                                </>
+                            )}
+
+                            {showFontSize && (
+                                <SettingItem
+                                    icon="text"
+                                    label={t('font_size')}
+                                    color="#00C7BE"
+                                    onPress={() => setFontModalVisible(true)}
+                                    rightElement={
+                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <Text style={{ color: '#8E8E93', fontSize: 17, marginRight: 6 }}>{fontSize}px</Text>
+                                            <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
+                                        </View>
+                                    }
+                                />
+                            )}
+                        </View>
+                    </View>
+                )}
 
                 {/* Centered Modal: Language */}
                 <Modal
@@ -246,43 +280,63 @@ export default function SettingsScreen({ navigation }: any) {
                     </Pressable>
                 </Modal>
 
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('support')}</Text>
-                    <View style={[styles.card, isDark && styles.cardDark]}>
-                        <SettingItem
-                            icon="help-buoy"
-                            label={t('help_support')}
-                            color="#34C759"
-                            onPress={handleSupport}
-                        />
-                        <View style={[styles.separator, isDark && styles.separatorDark]} />
-                        <SettingItem
-                            icon="star"
-                            label={t('rate_us')}
-                            color="#FFCC00"
-                        />
-                        <View style={[styles.separator, isDark && styles.separatorDark]} />
-                        <SettingItem
-                            icon="share-social"
-                            label={t('share_app')}
-                            color="#007AFF"
-                            onPress={handleShare}
-                        />
+                {showSupportSection && (
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('support')}</Text>
+                        <View style={[styles.card, isDark && styles.cardDark]}>
+                            {showHelp && (
+                                <>
+                                    <SettingItem
+                                        icon="help-buoy"
+                                        label={t('help_support')}
+                                        color="#34C759"
+                                        onPress={handleSupport}
+                                    />
+                                    {(showRate || showShare) && <View style={[styles.separator, isDark && styles.separatorDark]} />}
+                                </>
+                            )}
+                            {showRate && (
+                                <>
+                                    <SettingItem
+                                        icon="star"
+                                        label={t('rate_us')}
+                                        color="#FFCC00"
+                                    />
+                                    {showShare && <View style={[styles.separator, isDark && styles.separatorDark]} />}
+                                </>
+                            )}
+                            {showShare && (
+                                <SettingItem
+                                    icon="share-social"
+                                    label={t('share_app')}
+                                    color="#007AFF"
+                                    onPress={handleShare}
+                                />
+                            )}
+                        </View>
                     </View>
-                </View>
+                )}
 
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('about')}</Text>
-                    <View style={[styles.card, isDark && styles.cardDark]}>
-                        <SettingItem
-                            icon="information"
-                            label={t('version')}
-                            description="1.0.0"
-                            color="#8E8E93"
-                            rightElement={<Text style={{ color: '#8E8E93', fontSize: 17 }}>1.0.0</Text>}
-                        />
+                {showAboutSection && (
+                    <View style={styles.section}>
+                        <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('about')}</Text>
+                        <View style={[styles.card, isDark && styles.cardDark]}>
+                            <SettingItem
+                                icon="information"
+                                label={t('version')}
+                                description="1.0.0"
+                                color="#8E8E93"
+                                rightElement={<Text style={{ color: '#8E8E93', fontSize: 17 }}>1.0.0</Text>}
+                            />
+                        </View>
                     </View>
-                </View>
+                )}
+
+                {(!showAppSettings && !showSupportSection && !showAboutSection && !showTariffs) && (
+                    <View style={{ alignItems: 'center', marginTop: 40 }}>
+                        <Text style={{ color: '#8E8E93', fontSize: 16 }}>{t('nothing_found', 'Hech narsa topilmadi')}</Text>
+                    </View>
+                )}
             </ScrollView>
         </ScreenLayout>
     );
