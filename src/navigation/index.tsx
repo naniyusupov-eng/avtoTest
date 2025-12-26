@@ -11,6 +11,9 @@ import TariflarScreen from '../screens/TariflarScreen';
 import ComingSoonScreen from '../screens/ComingSoonScreen';
 import RuleDetailScreen from '../screens/RuleDetailScreen';
 import LanguageScreen from '../screens/LanguageScreen';
+import SignsScreen from '../screens/SignsScreen';
+import RulesScreen from '../screens/RulesScreen';
+import { SecurityScreen } from '../screens/SecurityScreen';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 
@@ -109,6 +112,32 @@ export default function RootNavigation() {
                         options={{
                             ...commonHeaderOptions,
                             title: t('language'),
+                        }}
+                    />
+                    <Stack.Screen
+                        name="Signs"
+                        component={SignsScreen}
+                        options={{
+                            ...commonHeaderOptions,
+                            title: t('signs'),
+                            headerShown: false, // Signs has its own ScreenLayout with title
+                        }}
+                    />
+                    <Stack.Screen
+                        name="Rules"
+                        component={RulesScreen}
+                        options={{
+                            ...commonHeaderOptions,
+                            title: t('rules'),
+                            headerShown: false, // Rules has its own ScreenLayout with title
+                        }}
+                    />
+                    <Stack.Screen
+                        name="Security"
+                        component={SecurityScreen}
+                        options={{
+                            ...commonHeaderOptions,
+                            headerShown: false,
                         }}
                     />
                 </Stack.Navigator>

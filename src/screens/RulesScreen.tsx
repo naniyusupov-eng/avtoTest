@@ -1,42 +1,58 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, FlatList, Animated } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import * as Haptics from 'expo-haptics';
 
-const CHAPTERS = [
-    { id: 1, key: 'chapter_1' },
-    { id: 2, key: 'chapter_2' },
-    { id: 3, key: 'chapter_3' },
-    { id: 4, key: 'chapter_4' },
-    { id: 5, key: 'chapter_5' },
-    { id: 6, key: 'chapter_6' },
-    { id: 7, key: 'chapter_7' },
-    { id: 8, key: 'chapter_8' },
-    { id: 9, key: 'chapter_9' },
-    { id: 10, key: 'chapter_10' },
-    { id: 11, key: 'chapter_11' },
-    { id: 12, key: 'chapter_12' },
-    { id: 13, key: 'chapter_13' },
-    { id: 14, key: 'chapter_14' },
-    { id: 15, key: 'chapter_15' },
-    { id: 16, key: 'chapter_16' },
-    { id: 17, key: 'chapter_17' },
-    { id: 18, key: 'chapter_18' },
-    { id: 19, key: 'chapter_19' },
-    { id: 20, key: 'chapter_20' },
-    { id: 21, key: 'chapter_21' },
-    { id: 22, key: 'chapter_22' },
-    { id: 23, key: 'chapter_23' },
-    { id: 24, key: 'chapter_24' },
-    { id: 25, key: 'chapter_25' },
-    { id: 26, key: 'chapter_26' },
-    { id: 27, key: 'chapter_27' },
-    { id: 28, key: 'chapter_28' },
-    { id: 29, key: 'chapter_29' },
-];
+const CHAPTERS = Array.from({ length: 29 }, (_, i) => ({ id: i + 1, key: `chapter_${i + 1}` }));
+
+const RuleItem = ({ item, index, navigation, t, isDark }: any) => {
+    // Animation
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 400,
+            delay: index * 10,
+            useNativeDriver: true,
+        }).start();
+    }, []);
+
+    // Random 'time' for aesthetic (e.g., '>' or actual time if we had it)
+    // We'll use a chevron for now.
+
+    return (
+        <Animated.View style={{ opacity: fadeAnim }}>
+            <TouchableOpacity
+                style={[styles.msgRow, isDark && styles.msgRowDark]}
+                activeOpacity={0.6}
+                onPress={() => {
+                    Haptics.selectionAsync();
+                    navigation.navigate('RuleDetail', { chapterId: item.id });
+                }}
+            >
+                {/* Avatar / Icon Spot */}
+                <View style={[styles.avatar, { backgroundColor: isDark ? '#1E293B' : '#E5E5EA' }]}>
+                    <Ionicons name="document-text" size={22} color={isDark ? '#94A3B8' : '#8E8E93'} />
+                </View>
+
+                {/* Content */}
+                <View style={[styles.msgContent, isDark && styles.msgContentBorderDark]}>
+                    <View style={styles.msgHeader}>
+                        <Text style={[styles.senderName, isDark && styles.textWhite]} numberOfLines={2}>
+                            {t(item.key)}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={20} color="#C7C7CC" style={{ marginLeft: 8 }} />
+                    </View>
+                </View>
+            </TouchableOpacity>
+        </Animated.View>
+    );
+};
 
 export const RulesScreen = ({ navigation }: any) => {
     const { t } = useTranslation();
@@ -48,37 +64,27 @@ export const RulesScreen = ({ navigation }: any) => {
         return title.includes(filterText.toLowerCase()) || item.id.toString().includes(filterText);
     });
 
-    const renderChapter = ({ item }: any) => (
-        <TouchableOpacity
-            style={[styles.chapterCard, isDark && styles.cardDark]}
-            onPress={() => {
-                navigation.navigate('RuleDetail', {
-                    chapterId: item.id
-                });
-            }}
-        >
-            <View style={[styles.numberBox, isDark && styles.numberBoxDark]}>
-                <Text style={[styles.numberText, isDark && styles.numberTextDark]}>{item.id}</Text>
-            </View>
-            <View style={styles.textContainer}>
-                <Text style={[styles.chapterTitle, isDark && styles.textWhite]}>
-                    {t(item.key)}
-                </Text>
-                <Ionicons name="chevron-forward" size={20} color={isDark ? "#555" : "#CCC"} />
-            </View>
-        </TouchableOpacity>
-    );
-
     return (
         <ScreenLayout
             edges={['top', 'left', 'right']}
-            title={t('rules')}
+            title={t('rules')} // "Messages" style title
+            showBackButton={true}
+            backLabel={t('home')}
             onSearch={setFilterText}
+            containerStyle={{ backgroundColor: isDark ? '#0F172A' : '#FFF' }} // Slate / White
         >
             <FlatList
                 data={filteredChapters}
                 keyExtractor={(item) => item.id.toString()}
-                renderItem={renderChapter}
+                renderItem={({ item, index }) => (
+                    <RuleItem
+                        item={item}
+                        index={index}
+                        navigation={navigation}
+                        t={t}
+                        isDark={isDark}
+                    />
+                )}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
                 ListEmptyComponent={
@@ -95,73 +101,58 @@ export const RulesScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     listContent: {
-        padding: 16,
-        paddingBottom: 100,
+        paddingVertical: 10,
+        paddingBottom: 120, // Ensure last item visible
     },
-    chapterCard: {
+    msgRow: {
         flexDirection: 'row',
+        paddingLeft: 16,
         alignItems: 'center',
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
-        elevation: 2,
+        backgroundColor: 'transparent',
     },
-    cardDark: {
-        backgroundColor: '#2C2C2E',
-        shadowOpacity: 0.3,
+    msgRowDark: {
+        backgroundColor: 'transparent', // Matches Screen BG
     },
-    numberBox: {
-        width: 40,
-        height: 40,
-        borderRadius: 10,
-        backgroundColor: '#141E3015',
+    avatar: {
+        width: 50, // Larger
+        height: 50,
+        borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 14,
+        backgroundColor: '#E5E5EA', // Light mode Gray 5
     },
-    numberBoxDark: {
-        backgroundColor: '#007AFF25',
-    },
-    numberText: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#141E30',
-    },
-    numberTextDark: {
-        color: '#4A9EFF',
-    },
-    textContainer: {
+    msgContent: {
         flex: 1,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#C6C6C8',
+        paddingVertical: 20, // Taller rows
+        paddingRight: 16,
+    },
+    msgContentBorderDark: {
+        borderBottomColor: '#334155', // Slate Separator
+    },
+    msgHeader: {
         flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'space-between',
+        alignItems: 'center',
     },
-    chapterTitle: {
-        fontSize: 15,
-        fontWeight: '500',
-        color: '#1C1C1E',
+    senderName: {
+        fontSize: 18, // Larger font
+        fontWeight: '600',
+        color: '#000',
         flex: 1,
-        paddingRight: 8,
     },
     textWhite: {
-        color: '#FFF',
+        color: '#E2E8F0', // Soft White
     },
     emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
         marginTop: 40,
+        alignItems: 'center',
     },
     emptyText: {
         fontSize: 16,
         color: '#8E8E93',
-        textAlign: 'center',
     },
 });
 

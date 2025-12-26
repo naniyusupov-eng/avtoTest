@@ -1,29 +1,75 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Animated, Image } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import * as Haptics from 'expo-haptics';
 
 const SIGN_CATEGORIES = [
-    { id: 'warning', titleKey: 'warning_signs', icon: 'warning', color: '#FF9500' },
-    { id: 'priority', titleKey: 'priority_signs', icon: 'chevron-up-circle', color: '#FF3B30' },
-    { id: 'prohibiting', titleKey: 'prohibiting_signs', icon: 'ban', color: '#FF3B30' },
-    { id: 'mandatory', titleKey: 'mandatory_signs', icon: 'arrow-forward-circle', color: '#141E30' },
-    { id: 'information', titleKey: 'information_signs', icon: 'information-circle', color: '#141E30' },
-    { id: 'service', titleKey: 'service_signs', icon: 'business', color: '#34C759' },
-    { id: 'additional', titleKey: 'additional_signs', icon: 'add-circle', color: '#8E8E93' },
-    { id: 'temporary', titleKey: 'temporary_signs', icon: 'construct', color: '#FFCC00' },
-    { id: 'traffic_lights', titleKey: 'traffic_lights_signals', icon: 'stopwatch', color: '#34C759' },
-    { id: 'vehicle', titleKey: 'vehicle_signs', icon: 'car', color: '#5856D6' },
-    { id: 'danger', titleKey: 'danger_signs', icon: 'flash', color: '#FF9500' },
+    { id: 'warning', titleKey: 'warning_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Vienna_Convention_road_sign_Aa.svg/500px-Vienna_Convention_road_sign_Aa.svg.png', color: '#FF9500' },
+    { id: 'priority', titleKey: 'priority_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Vienna_Convention_road_sign_B2a.svg/500px-Vienna_Convention_road_sign_B2a.svg.png', color: '#FF3B30' },
+    { id: 'prohibiting', titleKey: 'prohibiting_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Vienna_Convention_road_sign_C3a.svg/500px-Vienna_Convention_road_sign_C3a.svg.png', color: '#FF3B30' },
+    { id: 'mandatory', titleKey: 'mandatory_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Vienna_Convention_road_sign_D1a.svg/500px-Vienna_Convention_road_sign_D1a.svg.png', color: '#007AFF' },
+    { id: 'information', titleKey: 'information_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Vienna_Convention_road_sign_E5a.svg/500px-Vienna_Convention_road_sign_E5a.svg.png', color: '#007AFF' },
+    { id: 'service', titleKey: 'service_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Vienna_Convention_road_sign_F1a.svg/500px-Vienna_Convention_road_sign_F1a.svg.png', color: '#34C759' },
+    { id: 'additional', titleKey: 'additional_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Vienna_Convention_road_sign_H3a.svg/500px-Vienna_Convention_road_sign_H3a.svg.png', color: '#8E8E93' },
+    { id: 'temporary', titleKey: 'temporary_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Zeichen_123_-_Baustelle%2C_StVO_1992.svg/500px-Zeichen_123_-_Baustelle%2C_StVO_1992.svg.png', color: '#FFCC00' },
+    { id: 'traffic_lights', titleKey: 'traffic_lights_signals', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Traffic_light_red_amber_green.svg/500px-Traffic_light_red_amber_green.svg.png', color: '#34C759' },
+    { id: 'vehicle', titleKey: 'vehicle_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Vienna_Convention_road_sign_G1a.svg/500px-Vienna_Convention_road_sign_G1a.svg.png', color: '#5856D6' },
+    { id: 'danger', titleKey: 'danger_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Vienna_Convention_road_sign_Aa.svg/500px-Vienna_Convention_road_sign_Aa.svg.png', color: '#FF9500' },
 ];
 
 const MARKING_CATEGORIES = [
-    { id: 'horizontal_markings', titleKey: 'horizontal_markings', icon: 'remove', color: '#141E30' },
-    { id: 'vertical_markings', titleKey: 'vertical_markings', icon: 'reorder-two', color: '#5856D6' },
+    { id: 'horizontal_markings', titleKey: 'horizontal_markings', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Road_markings_zebra_crossing.jpg/640px-Road_markings_zebra_crossing.jpg', color: '#000000' },
+    { id: 'vertical_markings', titleKey: 'vertical_markings', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Singapore_Road_Signs_-_Obstacles_-_Split_Arrow_%28Type_2%29.svg/500px-Singapore_Road_Signs_-_Obstacles_-_Split_Arrow_%28Type_2%29.svg.png', color: '#5856D6' },
 ];
+
+const SignCategoryRow = ({ item, index, navigation, t, isDark }: any) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 400,
+            delay: index * 20,
+            useNativeDriver: true,
+        }).start();
+    }, []);
+
+    return (
+        <Animated.View style={{ opacity: fadeAnim }}>
+            <TouchableOpacity
+                style={[styles.msgRow, isDark && styles.msgRowDark]}
+                activeOpacity={0.6}
+                onPress={() => {
+                    Haptics.selectionAsync();
+                    navigation.navigate('SignsList', { categoryId: item.id, title: t(item.titleKey) });
+                }}
+            >
+                {/* Avatar with Custom Color */}
+                <View style={[styles.avatar, { backgroundColor: isDark ? '#1E293B' : '#E5E5EA' }]}>
+                    <Image
+                        source={{ uri: item.imageUrl }}
+                        style={{ width: 40, height: 40 }}
+                        resizeMode="contain"
+                    />
+                </View>
+
+                {/* Content */}
+                <View style={[styles.msgContent, isDark && styles.msgContentBorderDark]}>
+                    <View style={styles.msgHeader}>
+                        <Text style={[styles.senderName, isDark && styles.textWhite]} numberOfLines={1}>
+                            {t(item.titleKey)}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={20} color="#C7C7CC" style={{ marginLeft: 8 }} />
+                    </View>
+                </View>
+            </TouchableOpacity>
+        </Animated.View>
+    );
+};
 
 export const SignsScreen = ({ navigation }: any) => {
     const { t } = useTranslation();
@@ -37,46 +83,39 @@ export const SignsScreen = ({ navigation }: any) => {
     const filteredSignCategories = filterCategories(SIGN_CATEGORIES);
     const filteredMarkingCategories = filterCategories(MARKING_CATEGORIES);
 
-    const renderCategory = (item: any) => (
-        <TouchableOpacity
-            key={item.id}
-            style={[styles.categoryCard, isDark && styles.cardDark]}
-            onPress={() => navigation.navigate('SignsList', { categoryId: item.id, title: t(item.titleKey) })}
-        >
-            <View style={[styles.iconBox, { backgroundColor: `${item.color}15` }]}>
-                <Ionicons name={item.icon as any} size={24} color={item.color} />
-            </View>
-            <View style={styles.textContainer}>
-                <Text style={[styles.categoryTitle, isDark && styles.textWhite]}>
-                    {t(item.titleKey)}
-                </Text>
-                <Ionicons name="chevron-forward" size={20} color={isDark ? "#555" : "#CCC"} />
-            </View>
-        </TouchableOpacity>
-    );
-
     return (
         <ScreenLayout
             edges={['top', 'left', 'right']}
             title={t('signs')}
+            showBackButton={true} // Enable Back Button
+            backLabel={t('home')}
             onSearch={setFilterText}
+            containerStyle={{ backgroundColor: isDark ? '#0F172A' : '#FFF' }} // SMS Style BG (Rule: 0F172A? User asked for SMS style here. I will use Slate from Rule Screen to match EXACTLY "shu ishlarni qil" (do the same checks))
+        // Wait, "shu ishlarni qil" -> "Do the same things". 
+        // In RulesScreen I ended up with Slate (#0F172A) because "broken".
+        // So I will use Slate here too.
         >
-            <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+                style={{ backgroundColor: isDark ? '#0F172A' : '#FFF' }}
+            >
                 {filteredSignCategories.length > 0 && (
                     <>
-                        <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('road_signs')}</Text>
-                        {filteredSignCategories.map(renderCategory)}
+                        <Text style={[styles.sectionHeader, isDark && styles.textWhite]}>{t('road_signs')}</Text>
+                        {filteredSignCategories.map((item, index) => (
+                            <SignCategoryRow key={item.id} item={item} index={index} navigation={navigation} t={t} isDark={isDark} />
+                        ))}
                     </>
-                )}
-
-                {filteredSignCategories.length > 0 && filteredMarkingCategories.length > 0 && (
-                    <View style={styles.divider} />
                 )}
 
                 {filteredMarkingCategories.length > 0 && (
                     <>
-                        <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('road_markings')}</Text>
-                        {filteredMarkingCategories.map(renderCategory)}
+                        <View style={{ height: 20 }} />
+                        <Text style={[styles.sectionHeader, isDark && styles.textWhite]}>{t('road_markings')}</Text>
+                        {filteredMarkingCategories.map((item, index) => (
+                            <SignCategoryRow key={item.id} item={item} index={index + filteredSignCategories.length} navigation={navigation} t={t} isDark={isDark} />
+                        ))}
                     </>
                 )}
 
@@ -93,76 +132,67 @@ export const SignsScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
-        padding: 16,
-        paddingBottom: 100,
+    listContent: {
+        paddingVertical: 10,
+        paddingBottom: 120,
     },
-    sectionTitle: {
-        fontSize: 20,
+    sectionHeader: {
+        fontSize: 22, // Large bold header like "Messages"
         fontWeight: '700',
-        color: '#1C1C1E',
-        marginBottom: 16,
-        marginTop: 8,
-        marginLeft: 4,
+        paddingHorizontal: 16,
+        marginBottom: 10,
+        color: '#000',
+        marginTop: 10,
     },
-    categoryCard: {
+    msgRow: {
         flexDirection: 'row',
+        paddingLeft: 16,
         alignItems: 'center',
-        backgroundColor: '#FFF',
-        borderRadius: 12,
-        padding: 12,
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
-        elevation: 2,
+        backgroundColor: 'transparent',
     },
-    cardDark: {
-        backgroundColor: '#2C2C2E',
-        shadowOpacity: 0.3,
+    msgRowDark: {
+        backgroundColor: 'transparent',
     },
-    iconBox: {
-        width: 44,
-        height: 44,
-        borderRadius: 10,
+    avatar: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 16,
+        marginRight: 14,
+        backgroundColor: '#E5E5EA',
     },
-    textContainer: {
+    msgContent: {
         flex: 1,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#C6C6C8',
+        paddingVertical: 20,
+        paddingRight: 16,
+    },
+    msgContentBorderDark: {
+        borderBottomColor: '#334155',
+    },
+    msgHeader: {
         flexDirection: 'row',
-        alignItems: 'center',
         justifyContent: 'space-between',
+        alignItems: 'center',
     },
-    categoryTitle: {
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#1C1C1E',
+    senderName: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#000',
         flex: 1,
-        paddingRight: 8,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#EEE',
-        marginVertical: 12,
-        opacity: 0.5,
     },
     textWhite: {
-        color: '#FFF',
+        color: '#E2E8F0',
     },
     emptyContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
         marginTop: 40,
+        alignItems: 'center',
     },
     emptyText: {
         fontSize: 16,
         color: '#8E8E93',
-        textAlign: 'center',
     },
 });
 

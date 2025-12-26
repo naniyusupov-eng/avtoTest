@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     cardDark: {
-        backgroundColor: '#2C2C2E',
+        backgroundColor: '#1E293B',
     },
     item: {
         flexDirection: 'row',

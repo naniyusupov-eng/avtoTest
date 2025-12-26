@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     cardDark: {
-        backgroundColor: '#1C1C1E',
+        backgroundColor: '#1E293B',
         shadowOpacity: 0.3,
     },
     iconBox: {

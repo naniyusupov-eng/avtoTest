@@ -3,11 +3,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../screens/HomeScreen';
 import TicketsScreen from '../screens/TicketsScreen';
-import SignsScreen from '../screens/SignsScreen';
-import RulesScreen from '../screens/RulesScreen';
+import StatisticsScreen from '../screens/StatisticsScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import * as Haptics from 'expo-haptics';
 
 const Tab = createBottomTabNavigator();
 
@@ -39,42 +40,47 @@ export default function MainTabs() {
                         iconName = focused ? 'home' : 'home-outline';
                     } else if (route.name === 'Tickets') {
                         iconName = focused ? 'document-text' : 'document-text-outline';
-                    } else if (route.name === 'Signs') {
-                        iconName = focused ? 'stop-circle' : 'stop-circle-outline';
-                    } else if (route.name === 'Rules') {
-                        iconName = focused ? 'book' : 'book-outline';
+                    } else if (route.name === 'Statistics') {
+                        iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+                    } else if (route.name === 'Profile') {
+                        iconName = focused ? 'person' : 'person-outline';
                     } else if (route.name === 'Settings') {
                         iconName = focused ? 'settings' : 'settings-outline';
                     }
 
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
-                tabBarActiveTintColor: isDark ? '#4A9EFF' : '#141E30',
-                tabBarInactiveTintColor: isDark ? '#8E8E93' : '#AEAEB2',
+                tabBarActiveTintColor: isDark ? '#63B3ED' : '#0056D2', // High Contrast Brand Blue
+                tabBarInactiveTintColor: isDark ? '#94A3B8' : '#64748B', // Slate Gray
                 tabBarShowLabel: false,
                 tabBarStyle: {
-                    backgroundColor: isDark ? '#2C2C2E' : '#FFFFFF',
+                    backgroundColor: isDark ? '#1E293B' : '#FFFFFF', // Slate 800 vs White
                     position: 'absolute',
                     bottom: 25,
                     marginHorizontal: 20,
                     height: 64,
                     borderRadius: 32,
-                    shadowColor: '#000',
+                    shadowColor: isDark ? '#000' : '#0056D2', // Colored shadow for identity
                     shadowOffset: { width: 0, height: 8 },
-                    shadowOpacity: isDark ? 0.3 : 0.1,
-                    shadowRadius: 12,
-                    elevation: 8,
+                    shadowOpacity: isDark ? 0.4 : 0.15,
+                    shadowRadius: 16,
+                    elevation: 10,
                     borderTopWidth: 0,
                 },
                 tabBarItemStyle: {
                     paddingVertical: 10,
                 }
             })}
+            screenListeners={{
+                tabPress: () => {
+                    Haptics.selectionAsync();
+                },
+            }}
         >
             <Tab.Screen name="Home" component={HomeScreen} options={{ title: t('home') }} />
             <Tab.Screen name="Tickets" component={TicketsScreen} options={{ title: t('tickets'), headerShown: false }} />
-            <Tab.Screen name="Signs" component={SignsScreen} options={{ title: t('signs') }} />
-            <Tab.Screen name="Rules" component={RulesScreen} options={{ title: t('rules') }} />
+            <Tab.Screen name="Statistics" component={StatisticsScreen} options={{ title: t('statistics', 'Statistika') }} />
+            <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: t('profile', 'Profil') }} />
             <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: t('settings') }} />
         </Tab.Navigator>
     );

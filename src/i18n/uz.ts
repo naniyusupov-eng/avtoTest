@@ -121,5 +121,9 @@ export default {
         tip_text: 'Yo‘l harakati qoidalariga rioya qilish xavfsizlik garovidir. Piyodalar o‘tish joyida ehtiyot bo‘ling.',
         nothing_found: 'Hech narsa topilmadi',
         search: 'Qidirish...',
+        total_progress: 'Umumiy Natija',
+        all_tickets: 'Barchasi',
+        saved_tickets: 'Saqlanganlar',
+        hard_tickets: 'Qiyinlari',
     },
 };
