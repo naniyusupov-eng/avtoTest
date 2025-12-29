@@ -37,7 +37,8 @@ export const HomeScreen = ({ navigation }: any) => {
             subtitle: '20 Talik',
             icon: 'reader',
             gradient: isDark ? ['#3B82F6', '#1D4ED8'] : ['#2563EB', '#1E40AF'], // Blue
-            route: 'Tickets'
+            route: 'TicketDetail',
+            params: { ticketNumber: 'MIX', mode: 'exam20' }
         },
         {
             id: 'exam10',
@@ -45,8 +46,8 @@ export const HomeScreen = ({ navigation }: any) => {
             subtitle: '10 Talik',
             icon: 'flash',
             gradient: isDark ? ['#10B981', '#059669'] : ['#10B981', '#047857'], // Emerald
-            route: 'ComingSoon',
-            params: { title: 'Mini Test (10)' }
+            route: 'TicketDetail',
+            params: { ticketNumber: 'MINI', mode: 'exam10' }
         },
         {
             id: 'marathon',
@@ -54,17 +55,17 @@ export const HomeScreen = ({ navigation }: any) => {
             subtitle: 'Cheksiz',
             icon: 'infinite',
             gradient: isDark ? ['#8B5CF6', '#7C3AED'] : ['#8B5CF6', '#6D28D9'], // Purple
-            route: 'ComingSoon',
-            params: { title: 'Marafon' }
+            route: 'TicketDetail',
+            params: { ticketNumber: 'INF', mode: 'marathon' }
         },
         {
-            id: 'random',
-            title: 'Random',
-            subtitle: 'Tasodifiy',
-            icon: 'shuffle',
+            id: 'exam50',
+            title: 'Katta Test',
+            subtitle: '50 Talik',
+            icon: 'layers',
             gradient: isDark ? ['#F59E0B', '#D97706'] : ['#F59E0B', '#B45309'], // Amber
-            route: 'ComingSoon',
-            params: { title: 'Random' }
+            route: 'TicketDetail',
+            params: { ticketNumber: 'MAX', mode: 'exam50' }
         },
     ];
 
@@ -93,7 +94,7 @@ export const HomeScreen = ({ navigation }: any) => {
                     {renderHeader()}
 
                     {/* Exam Modes Grid */}
-                    <Text style={[styles.sectionTitle, isDark && styles.textWhite]}>{t('exams', 'Imtihonlar')}</Text>
+                    {/* Exam Modes Grid */}
                     <View style={styles.gridRowWrap}>
                         {EXAM_MODES.map((item) => (
                             <TouchableOpacity
@@ -124,7 +125,7 @@ export const HomeScreen = ({ navigation }: any) => {
                     </View>
 
                     {/* Theory Section */}
-                    <Text style={[styles.sectionTitle, isDark && styles.textWhite, { marginTop: 16 }]}>{t('theory', 'Nazariya')}</Text>
+                    {/* Theory Section */}
                     <View style={styles.gridRow}>
                         {/* Signs Card */}
                         <TouchableOpacity
@@ -157,8 +158,30 @@ export const HomeScreen = ({ navigation }: any) => {
                         </TouchableOpacity>
                     </View>
 
+                    {/* Thematic Tests Card */}
+                    <TouchableOpacity
+                        style={{ marginBottom: 24, borderRadius: 24, overflow: 'hidden', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 }}
+                        activeOpacity={0.8}
+                        onPress={() => navigation.navigate('ThematicTests')}
+                    >
+                        <LinearGradient
+                            colors={isDark ? ['#0891B2', '#155E75'] : ['#06B6D4', '#0891B2']} // Cyan
+                            style={{ padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                        >
+                            <View>
+                                <Text style={{ fontSize: 18, fontWeight: '700', color: '#FFF', marginBottom: 4 }}>Mavzulashtirilgan Testlar</Text>
+                                <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: '500' }}>Mavzular bo'yicha savollar</Text>
+                            </View>
+                            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                                <Ionicons name="library" size={24} color="#FFF" />
+                            </View>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
                     {/* Utility Section */}
-                    <Text style={[styles.sectionTitle, isDark && styles.textWhite, { marginTop: 24 }]}>{t('my_activity', 'Statistika')}</Text>
+                    {/* Utility Section */}
                     <View style={[styles.wideCard, isDark ? styles.boxDark : styles.boxLight]}>
                         <View style={styles.statRow}>
                             {/* Mistakes */}
@@ -169,12 +192,12 @@ export const HomeScreen = ({ navigation }: any) => {
                                 <Text style={[styles.statLabel, isDark && styles.textWhite]}>{t('mistakes')}</Text>
                             </TouchableOpacity>
                             <View style={[styles.dividerVertical, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }]} />
-                            {/* Favorites */}
-                            <TouchableOpacity style={styles.statItem} onPress={() => navigation.navigate('ComingSoon', { title: t('favorites') })}>
-                                <View style={[styles.statIconBox, { backgroundColor: '#FCE7F3' }]}>
-                                    <Ionicons name="heart" size={24} color="#EC4899" />
+                            {/* Saved */}
+                            <TouchableOpacity style={styles.statItem} onPress={() => navigation.navigate('Saved')}>
+                                <View style={[styles.statIconBox, { backgroundColor: '#FFFBEB' }]}>
+                                    <Ionicons name="bookmark" size={24} color="#F59E0B" />
                                 </View>
-                                <Text style={[styles.statLabel, isDark && styles.textWhite]}>{t('favorites')}</Text>
+                                <Text style={[styles.statLabel, isDark && styles.textWhite]}>{t('saved', 'Saqlanganlar')}</Text>
                             </TouchableOpacity>
                             <View style={[styles.dividerVertical, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }]} />
                             {/* History */}

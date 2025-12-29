@@ -14,8 +14,10 @@ import LanguageScreen from '../screens/LanguageScreen';
 import SignsScreen from '../screens/SignsScreen';
 import RulesScreen from '../screens/RulesScreen';
 import { SecurityScreen } from '../screens/SecurityScreen';
+import { SavedScreen } from '../screens/SavedScreen';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import { ThematicTestsScreen } from '../screens/ThematicTestsScreen';
 
 
 
@@ -138,6 +140,22 @@ export default function RootNavigation() {
                         options={{
                             ...commonHeaderOptions,
                             headerShown: false,
+                        }}
+                    />
+                    <Stack.Screen
+                        name="ThematicTests"
+                        component={ThematicTestsScreen}
+                        options={{
+                            ...commonHeaderOptions,
+                            title: 'Mavzulashtirilgan Testlar',
+                        }}
+                    />
+                    <Stack.Screen
+                        name="Saved"
+                        component={SavedScreen}
+                        options={{
+                            ...commonHeaderOptions,
+                            title: t('saved', 'Saqlanganlar'),
                         }}
                     />
                 </Stack.Navigator>

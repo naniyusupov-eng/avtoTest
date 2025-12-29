@@ -136,6 +136,7 @@ const styles = StyleSheet.create({
     topBar: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingVertical: 10,
         backgroundColor: 'transparent',
@@ -150,8 +151,14 @@ const styles = StyleSheet.create({
         zIndex: 5,
     },
     headerTitleContainer: {
-        flex: 1,
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+        justifyContent: 'center',
         alignItems: 'center',
+        zIndex: -1,
     },
     headerTitle: {
         fontSize: 18,

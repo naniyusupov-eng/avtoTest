@@ -1,69 +1,216 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert, Dimensions, FlatList, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert, Dimensions, FlatList, Animated, StatusBar, Platform, Image } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+
+
 
 const { width } = Dimensions.get('window');
 const QUESTION_WIDTH = width;
 
-// Mock Data Generator
-const generateQuestions = (ticketId: number) => {
+// Generate Mock Data
+const generateQuestions = (ticketId: number | string, mode?: string) => {
+    if (mode === 'thematic') {
+        return Array.from({ length: 50 }, (_, i) => {
+            return {
+                id: i + 1,
+                text: `Mavzuga oid savol matni... Chorrahalarda harakatlanish qoidalari haqida.`,
+                image: Math.random() > 0.5 ? 'https://plus.unsplash.com/premium_photo-1664303847960-586318f59035?q=80&w=800&auto=format&fit=crop' : null,
+                options: [
+                    { id: '1', text: 'Birinchi javob varianti' },
+                    { id: '2', text: 'Ikkinchi javob varianti' },
+                    { id: '3', text: 'Uchinchi javob varianti' },
+                    { id: '4', text: 'To\'rtinchi javob varianti' },
+                ],
+                correctOptionId: String(Math.floor(Math.random() * 4) + 1),
+                explanation: `Mavzuga oid batafsil izoh.`
+            };
+        });
+    }
+    if (mode === 'exam50') {
+        return Array.from({ length: 50 }, (_, i) => {
+            const rndTicket = Math.floor(Math.random() * 70) + 1;
+            const rndQ = Math.floor(Math.random() * 20) + 1;
+            return {
+                id: i + 1,
+                text: `Chorrahada harakatlanish tartibi qanday? Ushbu vaziyatda kim birinchi o'tish huquqiga ega?`,
+                image: Math.random() > 0.5 ? 'https://plus.unsplash.com/premium_photo-1664303847960-586318f59035?q=80&w=800&auto=format&fit=crop' : null,
+                options: [
+                    { id: '1', text: 'Asosiy yo\'ldagi avtomobil' },
+                    { id: '2', text: 'O\'ng tomondagi avtomobil' },
+                    { id: '3', text: 'To\'xtash shart' },
+                    { id: '4', text: 'Chapdagi avtomobil' },
+                ],
+                correctOptionId: String(Math.floor(Math.random() * 4) + 1),
+                explanation: `Yo'l harakati qoidalari bo'yicha javob.`
+            };
+        });
+    }
+    if (mode === 'exam10') {
+        return Array.from({ length: 10 }, (_, i) => {
+            const rndTicket = Math.floor(Math.random() * 70) + 1;
+            const rndQ = Math.floor(Math.random() * 20) + 1;
+            return {
+                id: i + 1,
+                text: `Chorrahada harakatlanish tartibi qanday? Ushbu vaziyatda kim birinchi o'tish huquqiga ega?`,
+                image: Math.random() > 0.5 ? 'https://plus.unsplash.com/premium_photo-1664303847960-586318f59035?q=80&w=800&auto=format&fit=crop' : null,
+                options: [
+                    { id: '1', text: 'Asosiy yo\'ldagi avtomobil' },
+                    { id: '2', text: 'O\'ng tomondagi avtomobil' },
+                    { id: '3', text: 'To\'xtash shart' },
+                    { id: '4', text: 'Chapdagi avtomobil' },
+                ],
+                correctOptionId: String(Math.floor(Math.random() * 4) + 1),
+                explanation: `Yo'l harakati qoidalari bo'yicha javob.`
+            };
+        });
+    }
+    if (mode === 'marathon') {
+        return Array.from({ length: 50 }, (_, i) => {
+            const rndTicket = Math.floor(Math.random() * 70) + 1;
+            const rndQ = Math.floor(Math.random() * 20) + 1;
+            return {
+                id: i + 1,
+                text: `Chorrahada harakatlanish tartibi qanday? Ushbu vaziyatda kim birinchi o'tish huquqiga ega?`,
+                image: Math.random() > 0.5 ? 'https://plus.unsplash.com/premium_photo-1664303847960-586318f59035?q=80&w=800&auto=format&fit=crop' : null,
+                options: [
+                    { id: '1', text: 'Asosiy yo\'ldagi avtomobil' },
+                    { id: '2', text: 'O\'ng tomondagi avtomobil' },
+                    { id: '3', text: 'To\'xtash shart' },
+                    { id: '4', text: 'Chapdagi avtomobil' },
+                ],
+                correctOptionId: String(Math.floor(Math.random() * 4) + 1),
+                explanation: `Yo'l harakati qoidalari bo'yicha javob.`
+            };
+        });
+    }
+    if (mode === 'exam20') {
+        return Array.from({ length: 20 }, (_, i) => {
+            const rndTicket = Math.floor(Math.random() * 70) + 1;
+            const rndQ = Math.floor(Math.random() * 20) + 1;
+            return {
+                id: i + 1,
+                text: `Chorrahada harakatlanish tartibi qanday? Ushbu vaziyatda kim birinchi o'tish huquqiga ega?`,
+                image: Math.random() > 0.5 ? 'https://plus.unsplash.com/premium_photo-1664303847960-586318f59035?q=80&w=800&auto=format&fit=crop' : null,
+                options: [
+                    { id: '1', text: 'Asosiy yo\'ldagi avtomobil' },
+                    { id: '2', text: 'O\'ng tomondagi avtomobil' },
+                    { id: '3', text: 'To\'xtash shart' },
+                    { id: '4', text: 'Chapdagi avtomobil' },
+                ],
+                correctOptionId: String(Math.floor(Math.random() * 4) + 1),
+                explanation: `Yo'l harakati qoidalari bo'yicha javob.`
+            };
+        });
+    }
+
     return Array.from({ length: 20 }, (_, i) => ({
         id: i + 1,
-        text: `${ticketId}-bilet, ${i + 1}-savol. Haydovchi chorrahada qanday harakatlanishi kerakligini ko'rsating. Ushbu vaziyatda kim ustunlikka ega?`,
-        image: null,
+        text: `Chorrahada harakatlanish tartibi qanday? Ushbu vaziyatda kim birinchi o'tish huquqiga ega?`,
+        image: i % 2 === 0 ? 'https://plus.unsplash.com/premium_photo-1664303847960-586318f59035?q=80&w=800&auto=format&fit=crop' : null,
         options: [
-            { id: '1', text: 'Birinchi o\'tish kerak, chunki u asosiy yo\'lda harakatlanmoqda' },
-            { id: '2', text: 'O\'ng tomondagi avtomobilga yo\'l berish kerak' },
-            { id: '3', text: 'To\'xtash va barcha transport vositalarini o\'tkazib yuborish kerak' },
-            { id: '4', text: 'Chorrahaga kirish taqiqlanadi' },
+            { id: '1', text: 'Asosiy yo\'ldagi avtomobil' },
+            { id: '2', text: 'O\'ng tomondagi avtomobil' },
+            { id: '3', text: 'To\'xtash shart' },
+            { id: '4', text: 'Chapdagi avtomobil' },
         ],
         correctOptionId: String((i % 4) + 1),
-        explanation: `Ushbu vaziyatda Yo'l harakati qoidalarining tegishli bandiga asosan, teng ahamiyatli yo'llar kesishuvida o'ng tomondan kelayotgan transport vositasiga yo'l berish shart.`
+        explanation: `Yo'l harakati qoidalari 15-bandiga ko'ra, teng ahamiyatli yo'llarda o'ngdan kelayotgan transport vositasiga yo'l berish kerak.`
     }));
 };
 
 export const TicketDetailScreen = ({ route, navigation }: any) => {
-    const { ticketNumber } = route.params;
+    const { ticketNumber, mode } = route.params;
     const { isDark } = useTheme();
     const { t } = useTranslation();
+    const insets = useSafeAreaInsets();
 
-    // State
-    const [questions] = useState(() => generateQuestions(ticketNumber));
-    const [currentIdx, setCurrentIdx] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes
+
+    const [questions] = useState(() => {
+        const all = generateQuestions(ticketNumber, mode);
+        if (mode === 'saved' && route.params?.initialIndex !== undefined) {
+            return [all[route.params.initialIndex]];
+        }
+        return all;
+    });
+    const [currentIdx, setCurrentIdx] = useState(mode === 'saved' ? 0 : (route.params?.initialIndex || 0));
+    const [timeLeft, setTimeLeft] = useState(mode === 'exam50' ? 50 * 60 : (mode === 'exam10' ? 10 * 60 : (mode === 'thematic' ? 50 * 60 : 25 * 60)));
     const [answers, setAnswers] = useState<{ [key: number]: string }>({});
     const [results, setResults] = useState<{ [key: number]: boolean }>({});
     const [isExplanationVisible, setExplanationVisible] = useState(false);
     const [isFinished, setFinished] = useState(false);
 
-    const flatListRef = useRef<FlatList>(null);
-    const paginationScrollRef = useRef<ScrollView>(null);
+    const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
-    // Animations
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-    const slideAnim = useRef(new Animated.Value(20)).current;
+    const loadSavedQuestions = async () => {
+        try {
+            const stored = await AsyncStorage.getItem('saved_questions');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                const ids = new Set<string>(parsed.map((item: any) => item.uid));
+                setSavedIds(ids);
+            }
+        } catch (e) {
+            console.error('Failed to load saved items', e);
+        }
+    };
 
     useEffect(() => {
-        Animated.parallel([
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 600,
-                useNativeDriver: true,
-            }),
-            Animated.spring(slideAnim, {
-                toValue: 0,
-                friction: 8,
-                useNativeDriver: true,
-            })
-        ]).start();
+        loadSavedQuestions();
     }, []);
 
-    // Timer
+    const toggleSave = async () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        const currentQuestion = questions[currentIdx];
+        const uid = `${ticketNumber}-${currentQuestion.id}`;
+
+        try {
+            const stored = await AsyncStorage.getItem('saved_questions');
+            let items = stored ? JSON.parse(stored) : [];
+            const newSavedIds = new Set(savedIds);
+
+            if (newSavedIds.has(uid)) {
+                items = items.filter((i: any) => i.uid !== uid);
+                newSavedIds.delete(uid);
+            } else {
+                items.push({
+                    uid,
+                    ticketNumber,
+                    questionId: currentQuestion.id,
+                    text: currentQuestion.text,
+                    timestamp: Date.now()
+                });
+                newSavedIds.add(uid);
+            }
+
+            setSavedIds(newSavedIds);
+            await AsyncStorage.setItem('saved_questions', JSON.stringify(items));
+        } catch (e) {
+            console.error('Failed to save item', e);
+        }
+    };
+
+
+
+    const flatListRef = useRef<FlatList>(null);
+    const paginationRef = useRef<FlatList>(null);
+
+    // Fade In Animation for Content
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
     useEffect(() => {
-        if (isFinished) return;
+        Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+    }, []);
+
+    // Timer Logic
+    useEffect(() => {
+        if (isFinished || mode === 'saved' || mode === 'marathon') return;
         const timer = setInterval(() => {
             setTimeLeft((prev) => {
                 if (prev <= 1) {
@@ -78,506 +225,605 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
         return () => clearInterval(timer);
     }, [isFinished]);
 
-    // Format Number (01, 02)
-    const formatNumber = (num: number) => num < 10 ? `0${num}` : num;
-
-    // Timer Format
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
-        return `${formatNumber(m)}:${formatNumber(s)}`;
+        return `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
     };
 
     const handleAnswer = (optionId: string) => {
         if (answers[currentIdx] || isFinished) return;
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
         const isCorrect = optionId === questions[currentIdx].correctOptionId;
+        const newAnswers = { ...answers, [currentIdx]: optionId };
+        const newResults = { ...results, [currentIdx]: isCorrect };
 
-        setAnswers(prev => ({ ...prev, [currentIdx]: optionId }));
-        setResults(prev => ({ ...prev, [currentIdx]: isCorrect }));
+        setAnswers(newAnswers);
+        setResults(newResults);
 
         if (isCorrect) {
-            setTimeout(() => {
-                scrollToIndex(currentIdx + 1);
-            }, 400); // Faster transition
+            setTimeout(() => scrollToIndex(currentIdx + 1), 1200);
+        } else {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+            // Check for 3 mistakes
+            const wrongCount = Object.values(newResults).filter(r => r === false).length;
+            if (wrongCount >= 3 && mode !== 'marathon') {
+                if (mode !== 'saved') {
+                    setFinished(true);
+                    // Alert removed as requested
+                }
+                return; // Stop here, result screen will show
+            }
+        }
+
+        // Check completion (all 20 answered)
+        if (Object.keys(newAnswers).length === questions.length) {
+            if (mode !== 'saved') {
+                setFinished(true);
+            }
         }
     };
 
     const scrollToIndex = (index: number) => {
         if (index < 0 || index >= questions.length) {
-            if (index >= questions.length) setFinished(true);
+            if (index >= questions.length && mode !== 'saved') setFinished(true);
             return;
         }
         flatListRef.current?.scrollToIndex({ index, animated: true });
         setCurrentIdx(index);
+        paginationRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
     };
 
-    // Update currentIdx on scroll
     const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
         if (viewableItems.length > 0) {
             const index = viewableItems[0].index;
             if (index !== null) {
                 setCurrentIdx(index);
-                // Also scroll pagination strip
-                if (paginationScrollRef.current) {
-                    const itemSize = 48; // 38 width + 10 margin
-                    const offset = (index * itemSize) - (width / 2) + (itemSize / 2);
-                    paginationScrollRef.current.scrollTo({ x: offset, animated: true });
-                }
+                paginationRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 });
             }
         }
     }).current;
 
-    const getBoxStyle = (index: number) => {
-        const isCurrent = index === currentIdx;
-        const result = results[index];
+    const renderHeader = () => (
+        <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: isDark ? '#0F172A' : '#FFF' }]}>
+
+            <View style={[styles.headerTop, { position: 'relative' }]}>
+                {/* Left */}
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <Ionicons name="arrow-back" size={24} color={isDark ? '#FFF' : '#1E293B'} />
+                </TouchableOpacity>
+
+                {/* Center Title - Absolute for perfect centering */}
+                <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 }}>
+                    <Text style={[styles.timerText, { color: isDark ? '#FFF' : '#1E293B' }]} numberOfLines={1}>
+                        {mode === 'marathon' ? 'Marafon' :
+                            (mode === 'thematic' ? (route.params.topicTitle || 'Mavzu') :
+                                (mode === 'exam50' ? 'Katta Test' :
+                                    (mode === 'exam20' ? 'Imtihon' :
+                                        (mode === 'exam10' ? 'Mini Test' : `${ticketNumber}-${t('ticket', 'Bilet').toLowerCase()}`))))}
+                    </Text>
+                </View>
+
+                {/* Right Timer or Finish Button */}
+                <View style={styles.headerActions}>
+                    {mode === 'marathon' && (
+                        <TouchableOpacity
+                            onPress={() => setFinished(true)}
+                            style={{ backgroundColor: '#EF4444', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
+                        >
+                            <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 13 }}>Yakunlash</Text>
+                        </TouchableOpacity>
+                    )}
+                    {mode !== 'saved' && mode !== 'marathon' && (
+                        <View style={{ backgroundColor: isDark ? '#1E293B' : '#F1F5F9', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}>
+                            <Text style={{ fontSize: 14, fontWeight: '700', fontVariant: ['tabular-nums'], color: timeLeft < 60 ? '#EF4444' : (isDark ? '#E2E8F0' : '#475569') }}>
+                                {formatTime(timeLeft)}
+                            </Text>
+                        </View>
+                    )}
+                </View>
+            </View>
+
+            {/* Numbered Pagination Strip - Hidden in Saved Mode and Marathon */}
+            {mode === 'marathon' && (
+                <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 24, paddingBottom: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                        <Text style={{ color: '#10B981', fontWeight: '800', fontSize: 16 }}>
+                            {Object.values(results).filter(r => r).length}
+                        </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name="close-circle" size={20} color="#EF4444" />
+                        <Text style={{ color: '#EF4444', fontWeight: '800', fontSize: 16 }}>
+                            {Object.values(results).filter(r => r === false).length}
+                        </Text>
+                    </View>
+                </View>
+            )}
+
+            {mode !== 'saved' && mode !== 'marathon' && (
+                <FlatList
+                    ref={paginationRef}
+                    data={questions}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.paginationContent}
+                    renderItem={({ item, index }) => {
+                        const status = results[index];
+                        const isActive = index === currentIdx;
+
+                        let bgColor = isDark ? '#334155' : '#F1F5F9';
+                        let textColor = isDark ? '#94A3B8' : '#64748B';
+                        let borderColor = 'transparent';
+
+                        if (answers[index]) {
+                            bgColor = status ? '#10B981' : '#EF4444';
+                            textColor = '#FFF';
+                        }
+                        if (isActive) {
+                            borderColor = '#3B82F6';
+                            if (!answers[index]) {
+                                bgColor = '#EFF6FF';
+                                textColor = '#3B82F6';
+                            }
+                        }
+
+                        return (
+                            <TouchableOpacity
+                                onPress={() => scrollToIndex(index)}
+                                style={[
+                                    styles.pageNumberBox,
+                                    { backgroundColor: bgColor, borderColor: isActive ? borderColor : 'transparent', borderWidth: isActive ? 1 : 0 }
+                                ]}
+                            >
+                                <Text style={[styles.pageNumberText, { color: textColor, fontWeight: isActive ? 'bold' : '500' }]}>
+                                    {index + 1}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    }}
+                    keyExtractor={item => item.id.toString()}
+                />
+            )}
+        </View>
+    );
+
+    const renderQuestion = ({ item, index }: { item: any, index: number }) => {
         const isAnswered = answers[index] !== undefined;
 
-        if (isCurrent) return styles.boxCurrent;
-        if (isAnswered) return result ? styles.boxCorrect : styles.boxIncorrect;
-        return styles.boxDefault;
-    };
-
-    const renderQuestionItem = ({ item, index }: { item: any; index: number }) => {
-        const currentQuestion = item;
         return (
             <View style={{ width: QUESTION_WIDTH, flex: 1 }}>
                 <ScrollView
-                    contentContainerStyle={styles.questionScrollContent}
+                    contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.questionContainer}>
-                        {/* Image Placeholder */}
-                        <View style={[styles.imageContainer, isDark && styles.cardDark]}>
-                            <Ionicons name="image" size={50} color="#C7C7CC" />
-                            <Text style={{ color: '#AAA', marginTop: 10, fontWeight: '500' }}>Rasm yuklanmadi</Text>
-                        </View>
+                    {/* Question Text (No Number Prefix) */}
+                    <Text style={[styles.qText, { color: isDark ? '#F1F5F9' : '#1E293B', textAlign: 'center', marginBottom: 32 }]}>
+                        {item.text}
+                    </Text>
 
-                        <Text style={[styles.questionText, isDark && styles.textWhite]}>
-                            {currentQuestion.text}
-                        </Text>
+                    {/* Compact Image Placeholder */}
+                    {item.image && (
+                        <Image
+                            source={{ uri: item.image }}
+                            style={[styles.imageArea, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
+                            resizeMode="cover"
+                        />
+                    )}
 
-                        <View style={styles.optionsContainer}>
-                            {currentQuestion.options.map((option: any, optIndex: number) => {
-                                const optionId = option.id;
-                                const isSelected = answers[index] === optionId;
-                                const isCorrectAnswer = optionId === currentQuestion.correctOptionId;
-                                const hasAnswered = answers[index] !== undefined;
+                    {/* Options */}
+                    <View style={styles.optionsList}>
+                        {item.options.map((opt: any, optIndex: number) => {
+                            const isSelected = answers[index] === opt.id;
+                            const isCorrect = opt.id === item.correctOptionId;
+                            const done = answers[index] !== undefined;
 
-                                let containerStyle: any = [styles.optionButton, isDark && styles.optionButtonDark];
-                                let labelStyle: any = [styles.optionLabel];
-                                let labelTextStyle: any = [styles.optionLabelText];
+                            let borderColor = 'transparent';
+                            let bgColor = isDark ? '#1E293B' : '#FFF';
+                            let textColor = isDark ? '#E2E8F0' : '#334155';
+                            let badgeBg = isDark ? '#334155' : '#F1F5F9';
+                            let badgeText = isDark ? '#94A3B8' : '#64748B';
 
-                                if (hasAnswered) {
-                                    if (isSelected && !isCorrectAnswer) {
-                                        containerStyle.push(styles.optionIncorrect);
-                                        labelStyle.push(styles.labelIncorrect);
-                                        labelTextStyle.push(styles.textWhite);
-                                    } else if (isCorrectAnswer) {
-                                        containerStyle.push(styles.optionCorrect);
-                                        labelStyle.push(styles.labelCorrect);
-                                        labelTextStyle.push(styles.textWhite);
-                                    }
+                            if (done) {
+                                if (isSelected && !isCorrect) {
+                                    bgColor = '#EF4444'; // Solid Red
+                                    borderColor = '#EF4444';
+                                    textColor = '#FFF';
+                                    badgeBg = 'rgba(255,255,255,0.2)';
+                                    badgeText = '#FFF';
+                                } else if (isCorrect) {
+                                    bgColor = '#10B981'; // Solid Green
+                                    borderColor = '#10B981';
+                                    textColor = '#FFF';
+                                    badgeBg = 'rgba(255,255,255,0.2)';
+                                    badgeText = '#FFF';
                                 }
+                            }
 
-                                const letters = ['A', 'B', 'C', 'D'];
-
-                                return (
-                                    <TouchableOpacity
-                                        key={optionId}
-                                        style={containerStyle}
-                                        onPress={() => handleAnswer(optionId)}
-                                        activeOpacity={0.7}
-                                        disabled={hasAnswered}
-                                    >
-                                        <View style={labelStyle}>
-                                            <Text style={labelTextStyle}>{letters[optIndex]}</Text>
-                                        </View>
-                                        <Text style={[styles.optionText, isDark && styles.textWhite]}>{option.text}</Text>
-                                        {hasAnswered && isCorrectAnswer && (
-                                            <Ionicons name="checkmark-circle" size={24} color="#FFF" style={styles.feedbackIcon} />
-                                        )}
-                                        {hasAnswered && isSelected && !isCorrectAnswer && (
-                                            <Ionicons name="close-circle" size={24} color="#FFF" style={styles.feedbackIcon} />
-                                        )}
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
+                            return (
+                                <TouchableOpacity
+                                    key={opt.id}
+                                    activeOpacity={0.9}
+                                    onPress={() => handleAnswer(opt.id)}
+                                    disabled={done}
+                                    style={[
+                                        styles.optionBtn,
+                                        { backgroundColor: bgColor, borderColor },
+                                        !done && isDark && { backgroundColor: '#1E293B' }
+                                    ]}
+                                >
+                                    <View style={[styles.fBadge, { backgroundColor: badgeBg }]}>
+                                        <Text style={[styles.fBadgeText, { color: badgeText }]}>F{optIndex + 1}</Text>
+                                    </View>
+                                    <Text style={[styles.optText, { color: textColor }]}>{opt.text}</Text>
+                                </TouchableOpacity>
+                            )
+                        })}
                     </View>
+
+                    {/* Action Buttons Row */}
+                    <View style={[styles.actionRow, { gap: 0, justifyContent: 'space-between', marginTop: 'auto', paddingTop: 24 }]}>
+                        {/* Explanation Button (Left) */}
+                        <TouchableOpacity
+                            style={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: 16,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                backgroundColor: isAnswered ? '#EFF6FF' : (isDark ? '#334155' : '#F1F5F9'),
+                                opacity: isAnswered ? 1 : 0.5
+                            }}
+                            onPress={() => isAnswered && setExplanationVisible(true)}
+                            disabled={!isAnswered}
+                        >
+                            <Ionicons name="bulb-outline" size={24} color={isAnswered ? '#3B82F6' : (isDark ? '#94A3B8' : '#94A3B8')} />
+                        </TouchableOpacity>
+
+                        {/* Next Button (Center) */}
+                        <TouchableOpacity
+                            style={{
+                                flex: 1,
+                                height: 56,
+                                borderRadius: 16,
+                                backgroundColor: '#3B82F6',
+                                flexDirection: 'row',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                marginHorizontal: 12
+                            }}
+                            onPress={() => scrollToIndex(index + 1)}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={{ color: '#FFF', fontSize: 16, fontWeight: '700', marginRight: 8 }}>{t('next', 'Keyingisi')}</Text>
+                            <Ionicons name="arrow-forward" size={20} color="#FFF" />
+                        </TouchableOpacity>
+
+                        {/* Save Button (Right) */}
+                        <TouchableOpacity
+                            onPress={toggleSave}
+                            style={{
+                                width: 56,
+                                height: 56,
+                                borderRadius: 16,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                backgroundColor: savedIds.has(`${ticketNumber}-${item.id}`) ? (isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFFBEB') : (isDark ? '#334155' : '#F1F5F9'),
+                            }}
+                        >
+                            <Ionicons
+                                name={savedIds.has(`${ticketNumber}-${item.id}`) ? "bookmark" : "bookmark-outline"}
+                                size={24}
+                                color={savedIds.has(`${ticketNumber}-${item.id}`) ? '#F59E0B' : (isDark ? '#CBD5E1' : '#475569')}
+                            />
+                        </TouchableOpacity>
+                    </View>
+
                 </ScrollView>
             </View>
         );
     };
 
-    return (
-        <ScreenLayout edges={['top', 'left', 'right']} style={styles.container}>
-            {/* Header */}
-            <View style={[styles.header, isDark && styles.headerDark]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-                    <Ionicons name="chevron-back" size={28} color={isDark ? '#FFF' : '#333'} />
-                </TouchableOpacity>
+    const renderResult = () => {
+        const correctCount = Object.values(results).filter(Boolean).length;
+        const wrongCount = Object.values(results).filter(r => r === false).length;
+        // Logic: Pass if wrongCount < 3 (standard traffic rules often allow max 2 errors, 3 is fail)
+        const isSuccess = wrongCount < 3;
 
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    {/* Timer */}
-                    <View style={styles.timerBadge}>
-                        <Ionicons name="time" size={16} color={timeLeft < 60 ? '#FF3B30' : '#007AFF'} />
-                        <Text style={[styles.timerText, timeLeft < 60 && styles.textRed]}>
-                            {formatTime(timeLeft)}
-                        </Text>
-                    </View>
-
-                    {/* Animated Result Circle */}
-                    <Animated.View style={[
-                        styles.resultBadge,
-                        isDark && styles.resultBadgeDark,
-                        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
-                    ]}>
-                        <Text style={[styles.resultText, isDark && styles.textWhite]}>
-                            {Object.values(results).filter(r => r).length}/{questions.length}
-                        </Text>
-                    </Animated.View>
+        return (
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, alignItems: 'center' }}>
+                <View style={{ marginBottom: 24 }}>
+                    <Ionicons name={isSuccess ? "trophy" : "close-circle"} size={80} color={isSuccess ? "#F59E0B" : "#EF4444"} />
                 </View>
 
-                {answers[currentIdx] ? (
-                    <TouchableOpacity onPress={() => setExplanationVisible(true)} style={styles.iconButton}>
-                        <Ionicons name="bulb" size={24} color="#FFCC00" />
-                    </TouchableOpacity>
-                ) : (
-                    <View style={{ width: 40 }} />
+                <Text style={{ fontSize: 24, fontWeight: '800', marginBottom: 8, color: isDark ? '#FFF' : '#0F172A', textAlign: 'center' }}>
+                    {mode === 'marathon'
+                        ? 'Marafon Natijasi'
+                        : (isSuccess ? t('passed', 'Imtihondan o\'tdingiz!') : t('finished', 'Imtihon yakunlandi'))}
+                </Text>
+                {isSuccess && mode !== 'marathon' && (
+                    <Text style={{ fontSize: 16, color: isDark ? '#94A3B8' : '#64748B', marginBottom: 32, textAlign: 'center' }}>
+                        Tabriklaymiz! Yaxshi natija.
+                    </Text>
                 )}
-            </View>
+                {(mode === 'marathon' || !isSuccess) && <View style={{ height: 24 }} />}
 
-            {/* Pagination Strip */}
-            <View style={[styles.paginationStrip, isDark && styles.paginationStripDark]}>
-                <ScrollView
-                    ref={paginationScrollRef}
+                {/* Big Stats */}
+                <View style={{ flexDirection: 'row', gap: 16, marginBottom: 32, width: '100%' }}>
+                    <View style={{ flex: 1, backgroundColor: isDark ? '#1E293B' : '#ECFDF5', padding: 16, borderRadius: 20, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 32, fontWeight: '800', color: '#10B981' }}>{correctCount}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#059669', opacity: 0.8 }}>To'g'ri</Text>
+                    </View>
+                    <View style={{ flex: 1, backgroundColor: isDark ? '#1E293B' : '#FEF2F2', padding: 16, borderRadius: 20, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 32, fontWeight: '800', color: '#EF4444' }}>{wrongCount}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#B91C1C', opacity: 0.8 }}>Xato</Text>
+                    </View>
+                </View>
+
+                {/* Grid */}
+                {/* Grid */}
+                {mode !== 'marathon' && (
+                    <View style={{ width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 40 }}>
+                        {questions.map((_, i) => {
+                            const res = results[i];
+                            let bg = isDark ? '#334155' : '#E2E8F0';
+                            if (res === true) bg = '#10B981';
+                            if (res === false) bg = '#EF4444';
+                            return (
+                                <View key={i} style={{ width: (width - 48 - (9 * 8)) / 10, height: 30, borderRadius: 6, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+                                    <Text style={{ color: res !== undefined ? '#FFF' : '#94A3B8', fontWeight: 'bold', fontSize: 12 }}>{i + 1}</Text>
+                                </View>
+                            )
+                        })}
+                    </View>
+                )}
+
+                {/* Actions */}
+                <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+                    <TouchableOpacity
+                        onPress={() => navigation.goBack()}
+                        style={{ flex: 1, backgroundColor: isDark ? '#334155' : '#E2E8F0', paddingVertical: 16, borderRadius: 16, alignItems: 'center' }}
+                    >
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: isDark ? '#FFF' : '#334155' }}>Asosiy menyu</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={() => {
+                            navigation.replace('TicketDetail', route.params);
+                        }}
+                        style={{ flex: 1, backgroundColor: '#3B82F6', paddingVertical: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#3B82F6', shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}
+                    >
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFF' }}>Qayta urinish</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        );
+    };
+
+    return (
+        <View style={[styles.container, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
+            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+
+            {!isFinished && renderHeader()}
+
+            {isFinished ? renderResult() : (
+                <FlatList
+                    ref={flatListRef}
+                    data={questions}
+                    renderItem={renderQuestion}
                     horizontal
+                    pagingEnabled
                     showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.paginationContent}
-                >
-                    {questions.map((_, index) => (
-                        <TouchableOpacity
-                            key={index}
-                            style={[styles.boxCommon, getBoxStyle(index)]}
-                            onPress={() => scrollToIndex(index)}
-                        >
-                            <Text style={[
-                                styles.boxText,
-                                index === currentIdx && styles.boxTextCurrent,
-                                answers[index] !== undefined && styles.boxTextAnswered
-                            ]}>{index + 1}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>
+                    keyExtractor={item => item.id.toString()}
+                    onViewableItemsChanged={onViewableItemsChanged}
+                    viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
+                    scrollEventThrottle={16}
+                />
+            )}
 
-            {/* Questions Pager */}
-            <FlatList
-                ref={flatListRef}
-                data={questions}
-                renderItem={renderQuestionItem}
-                keyExtractor={(item) => item.id.toString()}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onViewableItemsChanged={onViewableItemsChanged}
-                viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
-                scrollEnabled={true}
-                getItemLayout={(_, index) => ({
-                    length: QUESTION_WIDTH,
-                    offset: QUESTION_WIDTH * index,
-                    index,
-                })}
-            />
-
-            {/* Explanation Modal */}
+            {/* Simple Modal */}
             <Modal
+                transparent
                 visible={isExplanationVisible}
-                transparent={true}
-                animationType="slide"
+                animationType="fade"
                 onRequestClose={() => setExplanationVisible(false)}
             >
-                <TouchableOpacity
-                    style={styles.modalOverlay}
-                    activeOpacity={1}
-                    onPress={() => setExplanationVisible(false)}
-                >
-                    <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
-                        <View style={styles.modalIndicator} />
-                        <Text style={[styles.modalTitle, isDark && styles.textWhite]}>To'g'ri javob izohi</Text>
-                        <ScrollView style={{ maxHeight: 300 }} showsVerticalScrollIndicator={false}>
-                            <Text style={[styles.explanationText, isDark && styles.textGray]}>
-                                {questions[currentIdx].explanation}
-                            </Text>
-                        </ScrollView>
-                        <TouchableOpacity
-                            style={styles.closeModalButton}
-                            onPress={() => setExplanationVisible(false)}
-                        >
-                            <Text style={styles.closeModalText}>Tushunarli</Text>
+                <View style={styles.modalBg}>
+                    <View style={[styles.modalCard, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}>
+                        <Text style={[styles.modalTitle, { color: isDark ? '#FFF' : '#0F172A' }]}>{t('explanation', 'Izoh')}</Text>
+                        <Text style={[styles.modalText, { color: isDark ? '#CBD5E1' : '#475569' }]}>
+                            {questions[currentIdx].explanation}
+                        </Text>
+                        <TouchableOpacity style={styles.modalBtn} onPress={() => setExplanationVisible(false)}>
+                            <Text style={styles.modalBtnText}>OK</Text>
                         </TouchableOpacity>
                     </View>
-                </TouchableOpacity>
+                </View>
             </Modal>
-        </ScreenLayout>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F2F2F7',
     },
     header: {
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(0,0,0,0.05)',
+        zIndex: 10,
+        paddingBottom: 12,
+        marginBottom: 0,
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 5,
+    },
+    headerTop: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingVertical: 10,
-        backgroundColor: '#FFF',
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E5EA',
-        zIndex: 10,
+        marginBottom: 12,
     },
-    headerDark: {
-        backgroundColor: '#1C1C1E',
-        borderBottomColor: '#333',
+    backButton: {
+        padding: 4,
     },
-    iconButton: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
+    timerContainer: {
         alignItems: 'center',
-        borderRadius: 20,
-    },
-    timerBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#F2F2F7',
-        paddingHorizontal: 14,
-        paddingVertical: 6,
-        borderRadius: 16,
-    },
-    resultBadge: {
-        backgroundColor: '#F2F2F7',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    resultBadgeDark: {
-        backgroundColor: '#3A3A3C',
-    },
-    resultText: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#1C1C1E',
-        fontVariant: ['tabular-nums'],
     },
     timerText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginLeft: 6,
-        color: '#333',
-        fontVariant: ['tabular-nums'],
+        fontSize: 18,
+        fontWeight: '800',
     },
-    textRed: {
-        color: '#FF3B30',
-    },
-    paginationStrip: {
-        backgroundColor: '#FFF',
-        height: 60,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E5EA',
-    },
-    paginationStripDark: {
-        backgroundColor: '#1C1C1E',
-        borderBottomColor: '#333',
-    },
-    paginationContent: {
-        alignItems: 'center',
-        paddingHorizontal: 10,
-    },
-    boxCommon: {
-        width: 38,
-        height: 38,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 19,
-        marginHorizontal: 5,
-        backgroundColor: '#F2F2F7',
-    },
-    boxDefault: {
-        backgroundColor: '#F2F2F7',
-    },
-    boxCurrent: {
-        backgroundColor: '#007AFF', // Blue
-        transform: [{ scale: 1.1 }],
-    },
-    boxCorrect: {
-        backgroundColor: '#34C759', // Green
-    },
-    boxIncorrect: {
-        backgroundColor: '#FF3B30', // Red
-    },
-    boxText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#8E8E93',
-    },
-    boxTextCurrent: {
-        color: '#FFF',
-    },
-    boxTextAnswered: {
-        color: '#FFF',
-    },
-    questionScrollContent: {
-        padding: 20,
-        paddingBottom: 40,
-    },
-    questionContainer: {
-        flex: 1,
-    },
-    imageContainer: {
-        width: '100%',
-        height: 220,
-        backgroundColor: '#E5E5EA',
-        borderRadius: 20,
-        marginBottom: 24,
-        overflow: 'hidden',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    imageOverlay: {
-        position: 'absolute',
-    },
-    questionImage: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'cover',
-    },
-    questionText: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#000',
-        marginBottom: 24,
-        lineHeight: 28,
-        letterSpacing: -0.4,
-    },
-    optionsContainer: {
-        gap: 12,
-    },
-    optionButton: {
+    headerActions: {
+        minWidth: 32,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFF',
-        borderRadius: 16,
-        padding: 16,
-        borderWidth: 1.5,
-        borderColor: 'transparent',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 2,
+        justifyContent: 'flex-end',
+        gap: 12,
     },
-    optionButtonDark: {
-        backgroundColor: '#2C2C2E',
+    paginationContent: {
+        paddingHorizontal: 16,
+        gap: 6,
+        alignItems: 'center',
     },
-    optionCorrect: {
-        backgroundColor: '#34C759',
-        borderColor: '#34C759',
+    pageDot: {
+        width: 24, // Rectangle pill
+        height: 6,
+        borderRadius: 3,
+        marginRight: 4,
     },
-    optionIncorrect: {
-        backgroundColor: '#FF3B30',
-        borderColor: '#FF3B30',
-    },
-    optionLabel: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: '#F2F2F7',
+    pageNumberBox: {
+        width: 30,
+        height: 30,
+        borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 14,
+        marginRight: 6,
     },
-    labelCorrect: {
-        backgroundColor: 'rgba(255,255,255,0.3)',
-    },
-    labelIncorrect: {
-        backgroundColor: 'rgba(255,255,255,0.3)',
-    },
-    optionLabelText: {
+    pageNumberText: {
         fontSize: 14,
-        fontWeight: '800',
-        color: '#8E8E93',
+        fontWeight: '600',
     },
-    optionText: {
-        flex: 1,
-        fontSize: 17,
-        fontWeight: '500',
-        color: '#1C1C1E',
+    // Content
+    scrollContent: {
+        padding: 20,
+        paddingBottom: 50,
+        flexGrow: 1,
+    },
+    imageArea: {
+        width: '100%',
+        aspectRatio: 16 / 9,
+        borderRadius: 16,
+        marginBottom: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    qText: {
+        fontSize: 16,
         lineHeight: 22,
-    },
-    feedbackIcon: {
-        marginLeft: 8,
-    },
-    textWhite: {
-        color: '#FFF',
-    },
-    textGray: {
-        color: '#AEAEB2',
-    },
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end',
-    },
-    modalContent: {
-        backgroundColor: '#FFF',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        padding: 24,
-        paddingBottom: 40,
-    },
-    modalContentDark: {
-        backgroundColor: '#1C1C1E',
-    },
-    modalIndicator: {
-        width: 40,
-        height: 5,
-        backgroundColor: '#E5E5EA',
-        borderRadius: 2.5,
-        alignSelf: 'center',
-        marginBottom: 20,
-    },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: '700',
+        fontWeight: '600',
         marginBottom: 16,
-        color: '#000',
     },
-    explanationText: {
-        fontSize: 17,
-        lineHeight: 26,
-        color: '#333',
+    optionsList: {
+        gap: 8,
     },
-    closeModalButton: {
-        marginTop: 24,
-        backgroundColor: '#007AFF',
+    optionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
         borderRadius: 14,
-        paddingVertical: 16,
+        borderWidth: 1,
+        borderColor: 'transparent', // Default no border
+        // Light shadow for depth
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 3,
+        elevation: 1,
+    },
+    radioCircle: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        marginRight: 14,
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    closeModalText: {
-        color: '#FFF',
-        fontSize: 17,
+    fBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 8,
+        marginRight: 12,
+    },
+    fBadgeText: {
+        fontSize: 14,
         fontWeight: '700',
     },
-    cardDark: {
-        backgroundColor: '#2C2C2E',
+    optText: {
+        flex: 1,
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    // Actions
+    actionRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 24,
+    },
+    actionButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        borderRadius: 12,
+        gap: 8,
+    },
+    actionBtnText: {
+        fontSize: 15,
+        fontWeight: '600',
+    },
+    // Modal
+    modalBg: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        padding: 24,
+    },
+    modalCard: {
+        borderRadius: 24,
+        padding: 24,
+        alignItems: 'center',
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 12,
+    },
+    modalText: {
+        fontSize: 16,
+        textAlign: 'center',
+        lineHeight: 24,
+        marginBottom: 24,
+    },
+    modalBtn: {
+        backgroundColor: '#3B82F6',
+        paddingHorizontal: 32,
+        paddingVertical: 12,
+        borderRadius: 12,
+    },
+    modalBtnText: {
+        color: '#FFF',
+        fontWeight: 'bold',
+        fontSize: 16,
     },
 });
 

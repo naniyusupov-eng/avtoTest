@@ -69,6 +69,7 @@ export default function MainTabs() {
                 },
                 tabBarItemStyle: {
                     paddingVertical: 10,
+                    // justifyContent: 'center',
                 }
             })}
             screenListeners={{
