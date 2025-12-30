@@ -110,7 +110,7 @@ export default function SettingsScreen({ navigation }: any) {
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 style={[styles.scrollView, isDark && styles.scrollViewDark]}
-                contentContainerStyle={{ paddingBottom: 100, paddingTop: 16 }}
+                contentContainerStyle={{ paddingBottom: 100 }}
             >
                 {/* Tariffs */}
                 {showTariffs && (
@@ -365,9 +365,15 @@ const styles = StyleSheet.create({
     },
     card: {
         backgroundColor: '#FFF',
-        borderRadius: 16,
+        borderRadius: 20,
         marginHorizontal: 16,
         overflow: 'hidden',
+        // Shadow for premium feel
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
     },
     cardDark: {
         backgroundColor: '#1E293B',

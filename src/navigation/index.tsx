@@ -18,6 +18,7 @@ import { SavedScreen } from '../screens/SavedScreen';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { ThematicTestsScreen } from '../screens/ThematicTestsScreen';
+import StatisticsScreen from '../screens/StatisticsScreen';
 
 
 
@@ -148,6 +149,14 @@ export default function RootNavigation() {
                         options={{
                             ...commonHeaderOptions,
                             title: 'Mavzulashtirilgan Testlar',
+                        }}
+                    />
+                    <Stack.Screen
+                        name="Statistics"
+                        component={StatisticsScreen}
+                        options={{
+                            ...commonHeaderOptions,
+                            title: 'Statistika',
                         }}
                     />
                     <Stack.Screen

@@ -156,8 +156,9 @@ export const ProfileScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     scrollContent: {
-        padding: 16,
-        paddingBottom: 100,
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: 120,
     },
     // Header
     iconButton: {
@@ -242,6 +243,11 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         overflow: 'hidden',
         padding: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
     },
     divider: {
         height: 1,

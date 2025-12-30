@@ -33,8 +33,8 @@ export const HomeScreen = ({ navigation }: any) => {
     const EXAM_MODES = [
         {
             id: 'exam20',
-            title: 'Imtihon',
-            subtitle: '20 Talik',
+            title: t('exam'),
+            subtitle: t('questions_20'),
             icon: 'reader',
             gradient: isDark ? ['#3B82F6', '#1D4ED8'] : ['#2563EB', '#1E40AF'], // Blue
             route: 'TicketDetail',
@@ -42,8 +42,8 @@ export const HomeScreen = ({ navigation }: any) => {
         },
         {
             id: 'exam10',
-            title: 'Mini Test',
-            subtitle: '10 Talik',
+            title: t('mini_test'),
+            subtitle: t('questions_10'),
             icon: 'flash',
             gradient: isDark ? ['#10B981', '#059669'] : ['#10B981', '#047857'], // Emerald
             route: 'TicketDetail',
@@ -51,8 +51,8 @@ export const HomeScreen = ({ navigation }: any) => {
         },
         {
             id: 'marathon',
-            title: 'Marafon',
-            subtitle: 'Cheksiz',
+            title: t('marathon'),
+            subtitle: t('infinite'),
             icon: 'infinite',
             gradient: isDark ? ['#8B5CF6', '#7C3AED'] : ['#8B5CF6', '#6D28D9'], // Purple
             route: 'TicketDetail',
@@ -60,8 +60,8 @@ export const HomeScreen = ({ navigation }: any) => {
         },
         {
             id: 'exam50',
-            title: 'Katta Test',
-            subtitle: '50 Talik',
+            title: t('big_test'),
+            subtitle: t('questions_50'),
             icon: 'layers',
             gradient: isDark ? ['#F59E0B', '#D97706'] : ['#F59E0B', '#B45309'], // Amber
             route: 'TicketDetail',
@@ -124,7 +124,29 @@ export const HomeScreen = ({ navigation }: any) => {
                         ))}
                     </View>
 
-                    {/* Theory Section */}
+
+                    {/* Thematic Tests Card */}
+                    <TouchableOpacity
+                        style={{ marginBottom: 24, borderRadius: 24, overflow: 'hidden', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 }}
+                        activeOpacity={0.8}
+                        onPress={() => navigation.navigate('ThematicTests')}
+                    >
+                        <LinearGradient
+                            colors={isDark ? ['#0891B2', '#155E75'] : ['#06B6D4', '#0891B2']} // Cyan
+                            style={{ padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                        >
+                            <View>
+                                <Text style={{ fontSize: 18, fontWeight: '700', color: '#FFF', marginBottom: 4 }}>{t('thematic_tests')}</Text>
+                                <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: '500' }}>{t('thematic_desc')}</Text>
+                            </View>
+                            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
+                                <Ionicons name="library" size={24} color="#FFF" />
+                            </View>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
                     {/* Theory Section */}
                     <View style={styles.gridRow}>
                         {/* Signs Card */}
@@ -157,39 +179,16 @@ export const HomeScreen = ({ navigation }: any) => {
                             </View>
                         </TouchableOpacity>
                     </View>
-
-                    {/* Thematic Tests Card */}
-                    <TouchableOpacity
-                        style={{ marginBottom: 24, borderRadius: 24, overflow: 'hidden', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 }}
-                        activeOpacity={0.8}
-                        onPress={() => navigation.navigate('ThematicTests')}
-                    >
-                        <LinearGradient
-                            colors={isDark ? ['#0891B2', '#155E75'] : ['#06B6D4', '#0891B2']} // Cyan
-                            style={{ padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                        >
-                            <View>
-                                <Text style={{ fontSize: 18, fontWeight: '700', color: '#FFF', marginBottom: 4 }}>Mavzulashtirilgan Testlar</Text>
-                                <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: '500' }}>Mavzular bo'yicha savollar</Text>
-                            </View>
-                            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' }}>
-                                <Ionicons name="library" size={24} color="#FFF" />
-                            </View>
-                        </LinearGradient>
-                    </TouchableOpacity>
-
                     {/* Utility Section */}
                     {/* Utility Section */}
                     <View style={[styles.wideCard, isDark ? styles.boxDark : styles.boxLight]}>
                         <View style={styles.statRow}>
-                            {/* Mistakes */}
-                            <TouchableOpacity style={styles.statItem} onPress={() => navigation.navigate('ComingSoon', { title: t('mistakes') })}>
+                            {/* Mistakes / Statistics */}
+                            <TouchableOpacity style={styles.statItem} onPress={() => navigation.navigate('Statistics')}>
                                 <View style={[styles.statIconBox, { backgroundColor: '#FEE2E2' }]}>
-                                    <Ionicons name="alert-circle" size={24} color="#EF4444" />
+                                    <Ionicons name="stats-chart" size={24} color="#EF4444" />
                                 </View>
-                                <Text style={[styles.statLabel, isDark && styles.textWhite]}>{t('mistakes')}</Text>
+                                <Text style={[styles.statLabel, isDark && styles.textWhite]}>{t('statistics', 'Statistika')}</Text>
                             </TouchableOpacity>
                             <View style={[styles.dividerVertical, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }]} />
                             {/* Saved */}
