@@ -1,83 +1,76 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, FlatList, TextInput, Text } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../context/ThemeContext';
+import React from 'react';
+import { View, StyleSheet, FlatList, Pressable, Text } from 'react-native';
 import { ScreenLayout } from '../components/ScreenLayout';
+import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 export const ThematicTestsScreen = ({ navigation }: any) => {
-    const { t } = useTranslation();
     const { isDark } = useTheme();
-    const [searchQuery, setSearchQuery] = useState('');
+    const { t } = useTranslation();
 
-    // Mock Topics - as requested + generated
-    const TOPICS = [
-        { id: '1', title: 'Umumiy qoidalar' },
-        { id: '2', title: 'Haydovchilarning umumiy majburiyatlari' },
-        { id: '3', title: 'Piyodalarning majburiyatlari' },
-        { id: '4', title: 'Svetafor va tartibga soluvchining ishoralari' },
-        { id: '5', title: 'Maxsus ishoralar' },
-        { id: '6', title: 'Ogohlantiruvchi ishoralar' },
-        { id: '7', title: 'Chorrahalarda harakatlanish' },
-        { id: '8', title: 'Quvib o\'tish' },
-        { id: '9', title: 'To\'xtash va to\'xtab turish' },
-        { id: '10', title: 'Yo\'l harakatini tartibga solish' },
-        { id: '11', title: 'Odam tashish' },
-        { id: '12', title: 'Yuk tashish' },
-        { id: '13', title: 'Velosipedda harakatlanish' },
-        { id: '14', title: 'Ot aravada harakatlanish' },
-        { id: '15', title: 'Temir yo\'l kesishmalaridan o\'tish' },
-        { id: '16', title: 'Aholi punktlaridan o\'tish' },
-        { id: '17', title: 'Avtomagistrallarda harakatlanish' },
-        { id: '18', title: 'Turar joy dahalarida harakatlanish' },
-        { id: '19', title: 'Texnik holat' },
-        { id: '20', title: 'Tibbiy yordam ko\'rsatish' },
+    // Topics now use translation keys
+    const topics = [
+        { id: '1', titleKey: 'topic_1' },
+        { id: '2', titleKey: 'topic_2' },
+        { id: '3', titleKey: 'topic_3' },
+        { id: '4', titleKey: 'topic_4' },
+        { id: '5', titleKey: 'topic_5' },
+        { id: '6', titleKey: 'topic_6' },
+        { id: '7', titleKey: 'topic_7' },
+        { id: '8', titleKey: 'topic_8' },
+        { id: '9', titleKey: 'topic_9' },
+        { id: '10', titleKey: 'topic_10' },
+        { id: '11', titleKey: 'topic_11' },
+        { id: '12', titleKey: 'topic_12' },
+        { id: '13', titleKey: 'topic_13' },
+        { id: '14', titleKey: 'topic_14' },
+        { id: '15', titleKey: 'topic_15' },
+        { id: '16', titleKey: 'topic_16' },
+        { id: '17', titleKey: 'topic_17' },
+        { id: '18', titleKey: 'topic_18' },
+        { id: '19', titleKey: 'topic_19' },
+        { id: '20', titleKey: 'topic_20' },
     ];
 
-    const filteredTopics = TOPICS.filter(topic =>
-        topic.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    const onSearch = (text: string) => {
-        setSearchQuery(text);
-    };
-
-    const renderItem = ({ item, index }: { item: any, index: number }) => (
-        <TouchableOpacity
-            style={[styles.itemCard, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}
-            activeOpacity={0.7}
+    const renderItem = ({ item, index }: { item: any; index: number }) => (
+        <Pressable
+            style={({ pressed }) => [
+                styles.topicCard,
+                { backgroundColor: isDark ? '#1E293B' : '#FFF' },
+                pressed && { opacity: 0.7 }
+            ]}
             onPress={() => {
                 Haptics.selectionAsync();
-                // Navigate to test with 'thematic' mode
                 navigation.navigate('TicketDetail', {
                     ticketNumber: `T-${item.id}`,
                     mode: 'thematic',
-                    topicTitle: item.title,
+                    topicTitle: t(item.titleKey),
                     topicId: item.id
                 });
             }}
         >
-            <View style={styles.itemLeft}>
-                <View style={[styles.iconBox, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}>
-                    <Text style={[styles.indexText, { color: isDark ? '#CBD5E1' : '#64748B' }]}>{index + 1}</Text>
-                </View>
-                <Text style={[styles.itemText, { color: isDark ? '#FFF' : '#1E293B' }]}>{item.title}</Text>
+            <View style={[styles.indexCircle, { backgroundColor: isDark ? '#334155' : '#EFF6FF' }]}>
+                <Text style={[styles.indexText, { color: '#3B82F6' }]}>{index + 1}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={isDark ? '#64748B' : '#CBD5E1'} />
-        </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+                <Text style={[styles.topicTitle, isDark && styles.textWhite]}>{t(item.titleKey)}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={isDark ? '#64748B' : '#94A3B8'} />
+        </Pressable>
     );
 
     return (
         <ScreenLayout
-            title="Mavzulashtirilgan Testlar"
-            onSearch={onSearch}
+            title={t('thematic_tests')}
+            showBackButton={true}
             containerStyle={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}
         >
             <FlatList
-                data={filteredTopics}
+                data={topics}
                 renderItem={renderItem}
-                keyExtractor={item => item.id}
+                keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
             />
@@ -89,44 +82,40 @@ const styles = StyleSheet.create({
     listContent: {
         padding: 16,
         paddingBottom: 100,
-        gap: 12,
     },
-    itemCard: {
+    topicCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         padding: 16,
         borderRadius: 16,
-        // Shadow
-        shadowColor: "#000",
+        marginBottom: 12,
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 4,
         elevation: 2,
     },
-    itemLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flex: 1,
-        marginRight: 16,
-    },
-    iconBox: {
+    indexCircle: {
         width: 36,
         height: 36,
-        borderRadius: 12,
+        borderRadius: 18,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginRight: 16,
     },
     indexText: {
         fontSize: 14,
         fontWeight: '700',
     },
-    itemText: {
-        fontSize: 16,
+    topicTitle: {
+        fontSize: 15,
         fontWeight: '600',
-        flex: 1,
-    }
+        color: '#1E293B',
+        lineHeight: 22,
+    },
+    textWhite: {
+        color: '#FFF',
+    },
 });
 
 export default ThematicTestsScreen;

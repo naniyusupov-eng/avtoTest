@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, Alert, Dimensions, FlatList, Animated, StatusBar, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Modal, Alert, Dimensions, FlatList, Animated, StatusBar, Platform, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +41,7 @@ const generateQuestions = (ticketId: number | string, mode?: string) => {
                 id: i + 1,
                 text: `Chorrahada harakatlanish tartibi qanday? Ushbu vaziyatda kim birinchi o'tish huquqiga ega?`,
                 image: Math.random() > 0.5 ? 'https://plus.unsplash.com/premium_photo-1664303847960-586318f59035?q=80&w=800&auto=format&fit=crop' : null,
+                ticketId: rndTicket,
                 options: [
                     { id: '1', text: 'Asosiy yo\'ldagi avtomobil' },
                     { id: '2', text: 'O\'ng tomondagi avtomobil' },
@@ -133,6 +134,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
 
 
     const [questions] = useState(() => {
+        if (route.params?.customQuestions) return route.params.customQuestions;
         const all = generateQuestions(ticketNumber, mode);
         if (mode === 'saved' && route.params?.initialIndex !== undefined) {
             return [all[route.params.initialIndex]];
@@ -204,6 +206,48 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
     // Fade In Animation for Content
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
+    // Refs for auto-save on exit
+    const resultsRef = useRef(results);
+    const isFinishedRef = useRef(isFinished);
+
+
+    useEffect(() => { resultsRef.current = results; }, [results]);
+    useEffect(() => { isFinishedRef.current = isFinished; }, [isFinished]);
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('beforeRemove', () => {
+            if (!isFinishedRef.current && (!mode || mode === 'ticket')) {
+                const currentResults = resultsRef.current;
+                const answeredCount = Object.keys(currentResults).length;
+
+                if (answeredCount > 0) {
+                    const saveProgress = async () => {
+                        const correctCount = Object.values(currentResults).filter(Boolean).length;
+                        const wrongCount = Object.values(currentResults).filter(r => r === false).length;
+
+                        try {
+                            const stored = await AsyncStorage.getItem('tickets_progress');
+                            const progress = stored ? JSON.parse(stored) : {};
+
+                            progress[ticketNumber] = {
+                                status: 'in_progress',
+                                score: correctCount,
+                                wrong: wrongCount
+                            };
+
+                            await AsyncStorage.setItem('tickets_progress', JSON.stringify(progress));
+                        } catch (err) {
+                            console.error('Failed to save in-progress', err);
+                        }
+                    };
+                    saveProgress();
+                }
+            }
+        });
+        return unsubscribe;
+    }, [navigation, mode, ticketNumber]);
+
+
     useEffect(() => {
         Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
     }, []);
@@ -223,6 +267,37 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
             });
         }, 1000);
         return () => clearInterval(timer);
+    }, [isFinished]);
+
+    // Save Progress Logic
+    useEffect(() => {
+        if (isFinished) {
+            const save = async () => {
+                if (!mode || mode === 'ticket') { // Only for standard tickets
+                    const correctCount = Object.values(results).filter(Boolean).length;
+                    const wrongCount = Object.values(results).filter(r => r === false).length;
+
+                    try {
+                        const stored = await AsyncStorage.getItem('tickets_progress');
+                        const progress = stored ? JSON.parse(stored) : {};
+
+                        // Pass if <= 2 mistakes
+                        const passed = wrongCount <= 2;
+
+                        progress[ticketNumber] = {
+                            status: passed ? 'completed' : 'failed',
+                            score: correctCount,
+                            wrong: wrongCount
+                        };
+
+                        await AsyncStorage.setItem('tickets_progress', JSON.stringify(progress));
+                    } catch (e) {
+                        console.error('Failed to save progress', e);
+                    }
+                }
+            };
+            save();
+        }
     }, [isFinished]);
 
     const formatTime = (seconds: number) => {
@@ -247,14 +322,25 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
         } else {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
+            // Save mistake to registry
+            const currentQ = questions[currentIdx];
+            const uid = `${currentQ.ticketId || ticketNumber || 'gen'}-${currentQ.id}`; // Ensure uniqueness
+            AsyncStorage.getItem('mistake_registry').then(stored => {
+                const registry = stored ? JSON.parse(stored) : {};
+                const current = registry[uid] || { count: 0, question: currentQ };
+                current.count += 1;
+                // Update question content just in case, but keep count
+                registry[uid] = { count: current.count, question: currentQ };
+                AsyncStorage.setItem('mistake_registry', JSON.stringify(registry));
+            });
+
             // Check for 3 mistakes
             const wrongCount = Object.values(newResults).filter(r => r === false).length;
-            if (wrongCount >= 3 && mode !== 'marathon') {
-                if (mode !== 'saved') {
-                    setFinished(true);
-                    // Alert removed as requested
-                }
-                return; // Stop here, result screen will show
+            const isExamMode = mode?.startsWith('exam'); // exam50, exam10, exam20
+
+            if (wrongCount >= 3 && isExamMode) {
+                setFinished(true);
+                return;
             }
         }
 
@@ -268,7 +354,13 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
 
     const scrollToIndex = (index: number) => {
         if (index < 0 || index >= questions.length) {
-            if (index >= questions.length && mode !== 'saved') setFinished(true);
+            if (index >= questions.length && mode !== 'saved') {
+                // Check if all answered
+                if (Object.keys(answers).length === questions.length) {
+                    setFinished(true);
+                }
+                // Else: Do nothing, stay on last screen (user request matches this behavior)
+            }
             return;
         }
         flatListRef.current?.scrollToIndex({ index, animated: true });
@@ -291,9 +383,9 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
 
             <View style={[styles.headerTop, { position: 'relative' }]}>
                 {/* Left */}
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color={isDark ? '#FFF' : '#1E293B'} />
-                </TouchableOpacity>
+                </Pressable>
 
                 {/* Center Title - Absolute for perfect centering */}
                 <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: -1 }}>
@@ -309,12 +401,12 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                 {/* Right Timer or Finish Button */}
                 <View style={styles.headerActions}>
                     {mode === 'marathon' && (
-                        <TouchableOpacity
+                        <Pressable
                             onPress={() => setFinished(true)}
                             style={{ backgroundColor: '#EF4444', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
                         >
                             <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 13 }}>Yakunlash</Text>
-                        </TouchableOpacity>
+                        </Pressable>
                     )}
                     {mode !== 'saved' && mode !== 'marathon' && (
                         <View style={{ backgroundColor: isDark ? '#1E293B' : '#F1F5F9', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}>
@@ -372,7 +464,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                         }
 
                         return (
-                            <TouchableOpacity
+                            <Pressable
                                 onPress={() => scrollToIndex(index)}
                                 style={[
                                     styles.pageNumberBox,
@@ -382,7 +474,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                                 <Text style={[styles.pageNumberText, { color: textColor, fontWeight: isActive ? 'bold' : '500' }]}>
                                     {index + 1}
                                 </Text>
-                            </TouchableOpacity>
+                            </Pressable>
                         );
                     }}
                     keyExtractor={item => item.id.toString()}
@@ -444,9 +536,9 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                             }
 
                             return (
-                                <TouchableOpacity
+                                <Pressable
                                     key={opt.id}
-                                    activeOpacity={0.9}
+
                                     onPress={() => handleAnswer(opt.id)}
                                     disabled={done}
                                     style={[
@@ -459,7 +551,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                                         <Text style={[styles.fBadgeText, { color: badgeText }]}>F{optIndex + 1}</Text>
                                     </View>
                                     <Text style={[styles.optText, { color: textColor }]}>{opt.text}</Text>
-                                </TouchableOpacity>
+                                </Pressable>
                             )
                         })}
                     </View>
@@ -467,7 +559,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                     {/* Action Buttons Row */}
                     <View style={[styles.actionRow, { gap: 0, justifyContent: 'space-between', marginTop: 'auto', paddingTop: 24 }]}>
                         {/* Explanation Button (Left) */}
-                        <TouchableOpacity
+                        <Pressable
                             style={{
                                 width: 56,
                                 height: 56,
@@ -481,10 +573,10 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                             disabled={!isAnswered}
                         >
                             <Ionicons name="bulb-outline" size={24} color={isAnswered ? '#3B82F6' : (isDark ? '#94A3B8' : '#94A3B8')} />
-                        </TouchableOpacity>
+                        </Pressable>
 
                         {/* Next Button (Center) */}
-                        <TouchableOpacity
+                        <Pressable
                             style={{
                                 flex: 1,
                                 height: 56,
@@ -496,14 +588,14 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                                 marginHorizontal: 12
                             }}
                             onPress={() => scrollToIndex(index + 1)}
-                            activeOpacity={0.8}
+
                         >
                             <Text style={{ color: '#FFF', fontSize: 16, fontWeight: '700', marginRight: 8 }}>{t('next', 'Keyingisi')}</Text>
                             <Ionicons name="arrow-forward" size={20} color="#FFF" />
-                        </TouchableOpacity>
+                        </Pressable>
 
                         {/* Save Button (Right) */}
-                        <TouchableOpacity
+                        <Pressable
                             onPress={toggleSave}
                             style={{
                                 width: 56,
@@ -519,7 +611,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                                 size={24}
                                 color={savedIds.has(`${ticketNumber}-${item.id}`) ? '#F59E0B' : (isDark ? '#CBD5E1' : '#475569')}
                             />
-                        </TouchableOpacity>
+                        </Pressable>
                     </View>
 
                 </ScrollView>
@@ -541,12 +633,12 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
 
                 <Text style={{ fontSize: 24, fontWeight: '800', marginBottom: 8, color: isDark ? '#FFF' : '#0F172A', textAlign: 'center' }}>
                     {mode === 'marathon'
-                        ? 'Marafon Natijasi'
-                        : (isSuccess ? t('passed', 'Imtihondan o\'tdingiz!') : t('finished', 'Imtihon yakunlandi'))}
+                        ? t('marathon_result', 'Marafon Natijasi')
+                        : (isSuccess ? t('passed', 'Imtihondan o\'tdingiz!') : t('exam_finished', 'Imtihon yakunlandi'))}
                 </Text>
                 {isSuccess && mode !== 'marathon' && (
                     <Text style={{ fontSize: 16, color: isDark ? '#94A3B8' : '#64748B', marginBottom: 32, textAlign: 'center' }}>
-                        Tabriklaymiz! Yaxshi natija.
+                        {t('congrats_text', 'Tabriklaymiz! Yaxshi natija.')}
                     </Text>
                 )}
                 {(mode === 'marathon' || !isSuccess) && <View style={{ height: 24 }} />}
@@ -555,11 +647,11 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                 <View style={{ flexDirection: 'row', gap: 16, marginBottom: 32, width: '100%' }}>
                     <View style={{ flex: 1, backgroundColor: isDark ? '#1E293B' : '#ECFDF5', padding: 16, borderRadius: 20, alignItems: 'center' }}>
                         <Text style={{ fontSize: 32, fontWeight: '800', color: '#10B981' }}>{correctCount}</Text>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#059669', opacity: 0.8 }}>To'g'ri</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#059669', opacity: 0.8 }}>{t('correct_short', 'To\'g\'ri')}</Text>
                     </View>
                     <View style={{ flex: 1, backgroundColor: isDark ? '#1E293B' : '#FEF2F2', padding: 16, borderRadius: 20, alignItems: 'center' }}>
                         <Text style={{ fontSize: 32, fontWeight: '800', color: '#EF4444' }}>{wrongCount}</Text>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#B91C1C', opacity: 0.8 }}>Xato</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#B91C1C', opacity: 0.8 }}>{t('wrong_short', 'Xato')}</Text>
                     </View>
                 </View>
 
@@ -583,21 +675,21 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
 
                 {/* Actions */}
                 <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
-                    <TouchableOpacity
+                    <Pressable
                         onPress={() => navigation.goBack()}
                         style={{ flex: 1, backgroundColor: isDark ? '#334155' : '#E2E8F0', paddingVertical: 16, borderRadius: 16, alignItems: 'center' }}
                     >
-                        <Text style={{ fontSize: 16, fontWeight: '700', color: isDark ? '#FFF' : '#334155' }}>Asosiy menyu</Text>
-                    </TouchableOpacity>
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: isDark ? '#FFF' : '#334155' }}>{t('main_menu', 'Asosiy menyu')}</Text>
+                    </Pressable>
 
-                    <TouchableOpacity
+                    <Pressable
                         onPress={() => {
                             navigation.replace('TicketDetail', route.params);
                         }}
                         style={{ flex: 1, backgroundColor: '#3B82F6', paddingVertical: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#3B82F6', shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}
                     >
-                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFF' }}>Qayta urinish</Text>
-                    </TouchableOpacity>
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFF' }}>{t('retry', 'Qayta urinish')}</Text>
+                    </Pressable>
                 </View>
             </ScrollView>
         );
@@ -637,9 +729,9 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                         <Text style={[styles.modalText, { color: isDark ? '#CBD5E1' : '#475569' }]}>
                             {questions[currentIdx].explanation}
                         </Text>
-                        <TouchableOpacity style={styles.modalBtn} onPress={() => setExplanationVisible(false)}>
+                        <Pressable style={styles.modalBtn} onPress={() => setExplanationVisible(false)}>
                             <Text style={styles.modalBtnText}>OK</Text>
-                        </TouchableOpacity>
+                        </Pressable>
                     </View>
                 </View>
             </Modal>

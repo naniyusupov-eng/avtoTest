@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, FlatList, Image, Pressable, Dimensions } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTranslation } from 'react-i18next';
@@ -33,7 +33,7 @@ export const SignsListScreen = ({ route }: any) => {
         // Adjust gap logic if needed, or use columnWrapperStyle GAP
 
         return (
-            <TouchableOpacity
+            <Pressable
                 style={[
                     styles.itemCard,
                     isDark && styles.itemCardDark,
@@ -63,7 +63,7 @@ export const SignsListScreen = ({ route }: any) => {
                         {t(item.name_key) || item.name_uz}
                     </Text>
                 </View>
-            </TouchableOpacity>
+            </Pressable>
         );
     };
 

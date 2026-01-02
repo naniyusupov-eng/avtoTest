@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Dimensions, TouchableOpacity, Animated, Easing } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions, Pressable, Animated, Easing, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTranslation } from 'react-i18next';
@@ -120,7 +121,7 @@ export default function StatisticsScreen({ navigation }: any) {
                 <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
 
                     {/* Main Score Card */}
-                    <TouchableOpacity activeOpacity={0.9} onPress={() => Haptics.selectionAsync()}>
+                    <Pressable onPress={() => Haptics.selectionAsync()} style={({ pressed }) => pressed && { opacity: 0.9 }}>
                         <LinearGradient
                             colors={isDark ? ['#3B82F6', '#1E40AF'] : ['#4F46E5', '#3B82F6']}
                             style={styles.mainCard}
@@ -143,7 +144,7 @@ export default function StatisticsScreen({ navigation }: any) {
                                 </View>
                             </View>
                         </LinearGradient>
-                    </TouchableOpacity>
+                    </Pressable>
 
                     {/* Compact Activity Grid (2x2 but smaller/horizontal focus) */}
 
@@ -183,12 +184,38 @@ export default function StatisticsScreen({ navigation }: any) {
                     </View>
 
                     {/* Mistakes Analysis Button */}
-                    <TouchableOpacity
-                        style={[styles.mistakesCard, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}
-                        onPress={() => {
+                    <Pressable
+                        style={({ pressed }) => [
+                            styles.mistakesCard,
+                            { backgroundColor: isDark ? '#1E293B' : '#FFF' },
+                            pressed && { opacity: 0.8 }
+                        ]}
+                        onPress={async () => {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            try {
+                                const stored = await AsyncStorage.getItem('mistake_registry');
+                                if (stored) {
+                                    const registry = JSON.parse(stored);
+                                    const mistakeQuestions = Object.values(registry)
+                                        .filter((item: any) => item.count >= 3)
+                                        .map((item: any) => item.question);
+
+                                    if (mistakeQuestions.length > 0) {
+                                        navigation.navigate('TicketDetail', {
+                                            ticketNumber: 'MISTAKES',
+                                            mode: 'mistakes',
+                                            customQuestions: mistakeQuestions
+                                        });
+                                    } else {
+                                        Alert.alert(t('info', 'Malumot'), t('no_mistakes', 'Sizda 3 marta va undan ko\'p xato qilingan savollar yo\'q.'));
+                                    }
+                                } else {
+                                    Alert.alert(t('info', 'Malumot'), t('no_mistakes', 'Sizda xatolar tarixi yo\'q.'));
+                                }
+                            } catch (e) {
+                                console.error(e);
+                            }
                         }}
-                        activeOpacity={0.8}
                     >
                         <LinearGradient
                             colors={['#EF4444', '#F87171']}
@@ -207,7 +234,7 @@ export default function StatisticsScreen({ navigation }: any) {
                         <View style={[styles.arrowBox, { backgroundColor: isDark ? '#334155' : '#F3F4F6' }]}>
                             <Ionicons name="arrow-forward" size={20} color={isDark ? '#CBD5E1' : '#4B5563'} />
                         </View>
-                    </TouchableOpacity>
+                    </Pressable>
 
                 </Animated.View>
             </ScrollView>

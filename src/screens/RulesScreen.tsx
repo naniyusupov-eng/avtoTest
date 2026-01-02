@@ -29,7 +29,7 @@ const RuleItem = ({ item, index, navigation, t, isDark }: any) => {
         <Animated.View style={{ opacity: fadeAnim }}>
             <TouchableOpacity
                 style={[styles.msgRow, isDark && styles.msgRowDark]}
-                activeOpacity={0.6}
+
                 onPress={() => {
                     Haptics.selectionAsync();
                     navigation.navigate('RuleDetail', { chapterId: item.id });

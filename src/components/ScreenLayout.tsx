@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
@@ -52,7 +52,7 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, con
 
             {(showBackButton || title || onSearch || headerRight) && (
                 <View style={[styles.topBar, isDark && styles.topBarDark]}>
-                    <TouchableOpacity
+                    <Pressable
                         style={styles.headerLeft}
                         onPress={() => {
                             if (showBackButton) {
@@ -70,7 +70,7 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, con
                                 )}
                             </View>
                         )}
-                    </TouchableOpacity>
+                    </Pressable>
 
                     <View style={styles.headerTitleContainer}>
                         <Text style={[styles.headerTitle, isDark && styles.textWhite]}>{title}</Text>
@@ -79,15 +79,15 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, con
                     <View style={styles.headerRight}>
                         {headerRight}
                         {onSearch && !headerRight && (
-                            <TouchableOpacity onPress={() => { Haptics.selectionAsync(); toggleSearch(); }} style={styles.iconButton}>
+                            <Pressable onPress={() => { Haptics.selectionAsync(); toggleSearch(); }} style={styles.iconButton}>
                                 <Ionicons name={isSearchVisible ? "close" : "search"} size={24} color={isDark ? '#FFF' : '#141E30'} />
-                            </TouchableOpacity>
+                            </Pressable>
                         )}
                         {/* If both headerRight and Search exist, render both? For now priority to headerRight or Search if simple */}
                         {onSearch && headerRight && (
-                            <TouchableOpacity onPress={() => { Haptics.selectionAsync(); toggleSearch(); }} style={[styles.iconButton, { marginLeft: 8 }]}>
+                            <Pressable onPress={() => { Haptics.selectionAsync(); toggleSearch(); }} style={[styles.iconButton, { marginLeft: 8 }]}>
                                 <Ionicons name={isSearchVisible ? "close" : "search"} size={24} color={isDark ? '#FFF' : '#141E30'} />
-                            </TouchableOpacity>
+                            </Pressable>
                         )}
                     </View>
                 </View>
@@ -107,9 +107,9 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, con
                             returnKeyType="search"
                         />
                         {searchText.length > 0 && (
-                            <TouchableOpacity onPress={() => handleSearch('')}>
+                            <Pressable onPress={() => handleSearch('')}>
                                 <Ionicons name="close-circle" size={18} color="#8E8E93" />
-                            </TouchableOpacity>
+                            </Pressable>
                         )}
                     </View>
                 </View>

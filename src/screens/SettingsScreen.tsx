@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Switch, ScrollView, Share, Linking, Modal, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Switch, ScrollView, Share, Linking, Modal } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,11 +23,11 @@ const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onP
     const { isDark } = useTheme();
 
     return (
-        <TouchableOpacity
+        <Pressable
             style={[styles.item, isDark && styles.itemDark, style]}
             onPress={onPress}
             disabled={!onPress}
-            activeOpacity={0.6}
+
         >
             <View style={[styles.iconContainer, { backgroundColor: color }]}>
                 <Ionicons name={icon} size={18} color="#FFF" />
@@ -39,7 +39,7 @@ const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onP
             {rightElement ? rightElement : (
                 <Ionicons name="chevron-forward" size={18} color="#C7C7CC" />
             )}
-        </TouchableOpacity>
+        </Pressable>
     );
 };
 
@@ -211,7 +211,7 @@ export default function SettingsScreen({ navigation }: any) {
 
                             {LANGUAGES.map((lang, index) => (
                                 <View key={lang.code}>
-                                    <TouchableOpacity
+                                    <Pressable
                                         style={styles.langItem}
                                         onPress={() => setLanguage(lang.code)}
                                     >
@@ -226,16 +226,16 @@ export default function SettingsScreen({ navigation }: any) {
                                         {i18n.language === lang.code && (
                                             <Ionicons name="checkmark" size={24} color="#243B55" />
                                         )}
-                                    </TouchableOpacity>
+                                    </Pressable>
                                     {index < LANGUAGES.length - 1 && (
                                         <View style={[styles.modalSeparator, isDark && styles.modalSeparatorDark]} />
                                     )}
                                 </View>
                             ))}
 
-                            <TouchableOpacity style={styles.closeButton} onPress={() => setLangModalVisible(false)}>
+                            <Pressable style={styles.closeButton} onPress={() => setLangModalVisible(false)}>
                                 <Text style={styles.closeButtonText}>{t('cancel')}</Text>
-                            </TouchableOpacity>
+                            </Pressable>
                         </Pressable>
                     </Pressable>
                 </Modal>
@@ -273,9 +273,9 @@ export default function SettingsScreen({ navigation }: any) {
                                 />
                             </View>
 
-                            <TouchableOpacity style={styles.closeButton} onPress={() => setFontModalVisible(false)}>
+                            <Pressable style={styles.closeButton} onPress={() => setFontModalVisible(false)}>
                                 <Text style={styles.closeButtonText}>{t('cancel')}</Text>
-                            </TouchableOpacity>
+                            </Pressable>
                         </Pressable>
                     </Pressable>
                 </Modal>

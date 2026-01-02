@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../screens/HomeScreen';
 import TicketsScreen from '../screens/TicketsScreen';
 import StatisticsScreen from '../screens/StatisticsScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+// import ProfileScreen from '../screens/ProfileScreen'; // Removed
 import SettingsScreen from '../screens/SettingsScreen';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
@@ -42,8 +42,6 @@ export default function MainTabs() {
                         iconName = focused ? 'document-text' : 'document-text-outline';
                     } else if (route.name === 'Statistics') {
                         iconName = focused ? 'stats-chart' : 'stats-chart-outline';
-                    } else if (route.name === 'Profile') {
-                        iconName = focused ? 'person' : 'person-outline';
                     } else if (route.name === 'Settings') {
                         iconName = focused ? 'settings' : 'settings-outline';
                     }
@@ -81,7 +79,7 @@ export default function MainTabs() {
             <Tab.Screen name="Home" component={HomeScreen} options={{ title: t('home') }} />
             <Tab.Screen name="Tickets" component={TicketsScreen} options={{ title: t('tickets'), headerShown: false }} />
             <Tab.Screen name="Statistics" component={StatisticsScreen} options={{ title: t('statistics', 'Statistika') }} />
-            <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: t('profile', 'Profil') }} />
+            {/* Profile Tab Removed */}
             <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: t('settings') }} />
         </Tab.Navigator>
     );

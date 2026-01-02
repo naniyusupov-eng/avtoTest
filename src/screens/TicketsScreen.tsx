@@ -1,70 +1,91 @@
-import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, Dimensions, FlatList, View, Animated } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, TouchableOpacity, Dimensions, FlatList, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
-const COLUMN_COUNT = 4;
-const GAP = 10;
+const COLUMN_COUNT = 4; // Keep 4 for density, or 3 for comfort. Let's stick to 4 but cleaner.
+const GAP = 12;
 const PADDING = 16;
-// Calculate item size based on available width
 const AVAILABLE_WIDTH = width - (PADDING * 2) - (GAP * (COLUMN_COUNT - 1));
 const ITEM_SIZE = AVAILABLE_WIDTH / COLUMN_COUNT;
 
 const TICKET_COUNT = 70;
 
-// Mock data for ticket status (0: locked/new, 1: in-progress, 2: completed/passed, 3: failed)
-const getMockData = (id: number) => {
-    if (id === 1) return { status: 'completed', score: 19 };
-    if (id === 2) return { status: 'failed', score: 14 };
-    if (id === 3) return { status: 'in_progress', score: 5 };
-    return { status: 'new', score: 0 };
-};
-
 export const TicketsScreen = ({ navigation }: any) => {
     const { t } = useTranslation();
     const { isDark } = useTheme();
-
-    // Scale animation on press
-    const [scaleAnims] = useState(() => Array.from({ length: TICKET_COUNT + 1 }, () => new Animated.Value(1)));
     const [searchQuery, setSearchQuery] = useState('');
+    const [ticketStatuses, setTicketStatuses] = useState<any>({});
+
+    useFocusEffect(
+        useCallback(() => {
+            const loadStatuses = async () => {
+                try {
+                    const stored = await AsyncStorage.getItem('tickets_progress');
+                    if (stored) {
+                        setTicketStatuses(JSON.parse(stored));
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            };
+            loadStatuses();
+        }, [])
+    );
 
     const tickets = Array.from({ length: TICKET_COUNT }, (_, i) => {
         const id = i + 1;
-        const { status, score } = getMockData(id);
-        return { id, status, score };
+        const statusData = ticketStatuses[id] || { status: 'new', score: 0, wrong: 0 };
+        return { id, ...statusData };
     });
 
     const filteredTickets = tickets.filter(t => t.id.toString().includes(searchQuery));
 
-    const onPressIn = (index: number) => {
-        Animated.spring(scaleAnims[index], {
-            toValue: 0.92,
-            useNativeDriver: true,
-        }).start();
-    };
+    const renderTicket = ({ item }: { item: any }) => {
+        // Distinct style for new tickets
+        const isNew = item.status === 'new';
 
-    const onPressOut = (index: number) => {
-        Animated.spring(scaleAnims[index], {
-            toValue: 1,
-            useNativeDriver: true,
-        }).start();
-    };
+        let bgColor, borderColor;
+        if (isDark) {
+            bgColor = isNew ? '#1E293B' : '#0F172A'; // New: Lighter Slate, Worked: Darker (or vice versa? Let's make New "Inactive" look)
+            // Let's try: Worked = Card Color (#1E293B), New = Transparent/Outline or Slightly different
+            // Actually user wants "ajralib tursin". 
+            // Let's make NEW tickets have a subtle background, and WORKED tickets have "Surface" background.
 
-    const renderTicket = ({ item, index }: { item: any, index: number }) => {
-        const getScoreColor = () => {
-            switch (item.status) {
-                case 'completed': return '#10B981';
-                case 'failed': return '#EF4444';
-                case 'in_progress': return '#F59E0B';
-                default: return isDark ? '#94A3B8' : '#64748B';
+            // Worked
+            if (!isNew) {
+                bgColor = '#1E293B';
+                borderColor = '#334155';
+            } else {
+                // New / Untouched
+                bgColor = 'transparent'; // Or very dark
+                borderColor = '#334155';
             }
-        };
+        } else {
+            // Light Mode
+            if (!isNew) {
+                bgColor = '#FFFFFF';
+                borderColor = 'rgba(0,0,0,0.05)';
+            } else {
+                bgColor = '#F1F5F9'; // Grayish for new/empty
+                borderColor = 'transparent';
+            }
+        }
+
+        // Override for simplicity and better look based on previous "box" request:
+        // Let's use Opacity for differentiation.
+        const opacity = isNew ? 0.6 : 1;
+        // And maybe Background.
+        const finalBg = isDark
+            ? (isNew ? '#1E293B' : '#334155') // New=Standard, Worked=Highlighted? Or inverse.
+            : (isNew ? '#F8FAFC' : '#FFFFFF');
 
         return (
             <TouchableOpacity
@@ -72,50 +93,40 @@ export const TicketsScreen = ({ navigation }: any) => {
                     Haptics.selectionAsync();
                     navigation.navigate('TicketDetail', { ticketNumber: item.id });
                 }}
-                onPressIn={() => onPressIn(index)}
-                onPressOut={() => onPressOut(index)}
-                activeOpacity={1}
+                activeOpacity={0.7}
+                style={[
+                    styles.card,
+                    {
+                        backgroundColor: finalBg,
+                        borderColor: isDark ? '#334155' : 'rgba(0,0,0,0.05)',
+                        borderWidth: 1,
+                        // Add shadow only if worked
+                        elevation: isNew ? 0 : 2,
+                        shadowOpacity: isNew ? 0 : 0.05,
+                    }
+                ]}
             >
-                <Animated.View style={[
-                    styles.cardContainer,
-                    { transform: [{ scale: scaleAnims[index] }] }
-                ]}>
-                    <View
-                        style={[
-                            styles.card,
-                            {
-                                backgroundColor: isDark ? '#1E293B' : '#FFF',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                padding: 0
-                            }
-                        ]}
-                    >
-                        {item.status === 'new' && (
-                            <View style={{ position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: 4, backgroundColor: '#3B82F6' }} />
-                        )}
+                {/* Number fixed in center */}
+                <Text style={[styles.number, { color: isDark ? '#F1F5F9' : '#1E293B' }]}>
+                    {item.id}
+                </Text>
 
-                        <Text style={[styles.number, { color: isDark ? '#F1F5F9' : '#1E293B' }]}>
-                            {item.id}
-                        </Text>
-
-                        {item.status !== 'new' && (
-                            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, backgroundColor: isDark ? '#334155' : '#E2E8F0' }}>
-                                <View
-                                    style={{
-                                        height: '100%',
-                                        width: `${Math.round((item.score / 20) * 100)}%`,
-                                        backgroundColor: ((item.score / 20) * 100) >= 70 ? '#10B981' : (((item.score / 20) * 100) >= 40 ? '#F59E0B' : '#EF4444')
-                                    }}
-                                />
-                            </View>
-                        )}
+                {/* Stats absolute at bottom */}
+                {!isNew && (
+                    <View style={{ position: 'absolute', bottom: 8, flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: '#10B981' }}>{item.score}</Text>
+                        <View style={{ width: 1, height: 8, backgroundColor: isDark ? '#64748B' : '#CBD5E1' }} />
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: '#EF4444' }}>{item.wrong}</Text>
                     </View>
-                </Animated.View>
+                )}
+
+                {/* Optional: Dot for new? User said "kirilmagan biletlar ajralib tursin". 
+                    The background difference (White vs Gray/Slate) should be enough. 
+                    Plus 'New' tickets don't have stats at bottom. 
+                */}
             </TouchableOpacity>
         );
     };
-
 
     return (
         <ScreenLayout
@@ -123,6 +134,7 @@ export const TicketsScreen = ({ navigation }: any) => {
             showBackButton={false}
             edges={['top', 'left', 'right']}
             onSearch={setSearchQuery}
+            containerStyle={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}
         >
             <FlatList
                 data={filteredTickets}
@@ -141,53 +153,42 @@ const styles = StyleSheet.create({
     grid: {
         padding: PADDING,
     },
-    cardContainer: {
-        width: ITEM_SIZE,
-        height: ITEM_SIZE * 1.1, // Slightly taller
-        marginBottom: GAP,
-    },
     card: {
-        flex: 1,
-        borderRadius: 18, // Smooth rounded corners
-        padding: 12,
-        justifyContent: 'space-between',
+        width: ITEM_SIZE,
+        height: ITEM_SIZE,
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: GAP,
+        position: 'relative',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
         elevation: 2,
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.03)',
-        overflow: 'hidden',
     },
-    cardDark: {
-        borderColor: '#334155', // Slate-700
-        shadowOpacity: 0.3,
-        shadowColor: '#000',
-        backgroundColor: '#1E293B', // Ensure background set if gradient fails or for transparency
+    cardNewLight: {
+        backgroundColor: '#FFF',
     },
-    cardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        zIndex: 2,
+    cardNewDark: {
+        backgroundColor: '#1E293B',
     },
     number: {
-        fontSize: 24,
-        fontWeight: '800',
-        fontVariant: ['tabular-nums'],
+        fontSize: 20,
+        fontWeight: '700',
     },
-    cardFooter: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        alignItems: 'center',
-        zIndex: 2,
+    iconContainer: {
+        position: 'absolute',
+        top: 6,
+        right: 6,
     },
-    starsContainer: {
-        flexDirection: 'row',
-        gap: 2,
-    },
+    dotNew: {
+        position: 'absolute',
+        bottom: 8,
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+    }
 });
 
 export default TicketsScreen;
-

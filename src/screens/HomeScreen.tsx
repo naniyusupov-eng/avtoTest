@@ -73,11 +73,7 @@ export const HomeScreen = ({ navigation }: any) => {
         <View style={styles.header}>
             <View>
                 <Text style={[styles.brandText, isDark && styles.textWhite]}>AvtoTest</Text>
-                {/* "Premium Edition" removed */}
             </View>
-            <TouchableOpacity style={[styles.profileButton, { borderColor: isDark ? '#334155' : '#E2E8F0' }]}>
-                <Ionicons name="person" size={20} color={isDark ? '#FFF' : '#000'} />
-            </TouchableOpacity>
         </View>
     );
 
@@ -160,7 +156,6 @@ export const HomeScreen = ({ navigation }: any) => {
                             </View>
                             <View>
                                 <Text style={[styles.boxTitle, isDark && styles.textWhite]}>{t('signs')}</Text>
-                                <Text style={styles.boxSubtitle}>Belgilar</Text>
                             </View>
                         </TouchableOpacity>
 
@@ -175,7 +170,6 @@ export const HomeScreen = ({ navigation }: any) => {
                             </View>
                             <View>
                                 <Text style={[styles.boxTitle, isDark && styles.textWhite]}>{t('rules')}</Text>
-                                <Text style={styles.boxSubtitle}>Qoidalar</Text>
                             </View>
                         </TouchableOpacity>
                     </View>
@@ -184,7 +178,7 @@ export const HomeScreen = ({ navigation }: any) => {
                     <View style={[styles.wideCard, isDark ? styles.boxDark : styles.boxLight]}>
                         <View style={styles.statRow}>
                             {/* Mistakes / Statistics */}
-                            <TouchableOpacity style={styles.statItem} onPress={() => navigation.navigate('Statistics')}>
+                            <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => navigation.navigate('Statistics')}>
                                 <View style={[styles.statIconBox, { backgroundColor: '#FEE2E2' }]}>
                                     <Ionicons name="stats-chart" size={24} color="#EF4444" />
                                 </View>
@@ -192,7 +186,7 @@ export const HomeScreen = ({ navigation }: any) => {
                             </TouchableOpacity>
                             <View style={[styles.dividerVertical, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }]} />
                             {/* Saved */}
-                            <TouchableOpacity style={styles.statItem} onPress={() => navigation.navigate('Saved')}>
+                            <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => navigation.navigate('Saved')}>
                                 <View style={[styles.statIconBox, { backgroundColor: '#FFFBEB' }]}>
                                     <Ionicons name="bookmark" size={24} color="#F59E0B" />
                                 </View>
@@ -200,7 +194,7 @@ export const HomeScreen = ({ navigation }: any) => {
                             </TouchableOpacity>
                             <View style={[styles.dividerVertical, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }]} />
                             {/* History */}
-                            <TouchableOpacity style={styles.statItem} onPress={() => navigation.navigate('ComingSoon', { title: t('history') })}>
+                            <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => navigation.navigate('ComingSoon', { title: t('history') })}>
                                 <View style={[styles.statIconBox, { backgroundColor: '#ede9fe' }]}>
                                     <Ionicons name="time" size={24} color="#8b5cf6" />
                                 </View>

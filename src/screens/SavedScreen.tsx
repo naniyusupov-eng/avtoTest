@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, Alert, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTranslation } from 'react-i18next';
@@ -76,10 +76,10 @@ export const SavedScreen = ({ navigation }: any) => {
     };
 
     const renderItem = ({ item }: { item: SavedQuestion }) => (
-        <TouchableOpacity
+        <Pressable
             style={[styles.card, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}
             onPress={() => handlePress(item)}
-            activeOpacity={0.7}
+
         >
             <View style={styles.cardHeader}>
                 <View style={[styles.badge, { backgroundColor: isDark ? '#334155' : '#EFF6FF' }]}>
@@ -87,9 +87,9 @@ export const SavedScreen = ({ navigation }: any) => {
                         {t('ticket', 'Bilet')} {item.ticketNumber} &bull; {t('question', 'Savol')} {item.questionId}
                     </Text>
                 </View>
-                <TouchableOpacity onPress={() => handleDelete(item.uid)} hitSlop={10}>
+                <Pressable onPress={() => handleDelete(item.uid)} hitSlop={10}>
                     <Ionicons name="trash-outline" size={20} color="#EF4444" />
-                </TouchableOpacity>
+                </Pressable>
             </View>
 
             <Text
@@ -105,7 +105,7 @@ export const SavedScreen = ({ navigation }: any) => {
                 </Text>
                 <Ionicons name="chevron-forward" size={16} color={isDark ? '#64748B' : '#94A3B8'} />
             </View>
-        </TouchableOpacity>
+        </Pressable>
     );
 
     return (
