@@ -47,12 +47,14 @@ export const SavedScreen = ({ navigation }: any) => {
     };
 
     const handlePress = (item: SavedQuestion) => {
-        // Navigate to TicketDetail with specific initial index
-        // Note: The questionId is 1-based usually, so index = questionId - 1
+        // Pass all saved items to enable navigation between them
+        const initialIndex = savedData.findIndex(i => i.uid === item.uid);
+
         navigation.navigate('TicketDetail', {
-            ticketNumber: item.ticketNumber,
-            initialIndex: item.questionId - 1,
-            mode: 'saved'
+            mode: 'saved',
+            savedList: savedData, // Pass full list
+            initialIndex: initialIndex !== -1 ? initialIndex : 0,
+            ticketNumber: item.ticketNumber // Just for fallback
         });
     };
 

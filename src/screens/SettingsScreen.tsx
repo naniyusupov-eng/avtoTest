@@ -19,7 +19,7 @@ interface SettingItemProps {
     style?: any;
 }
 
-const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onPress, rightElement, color = '#243B55', style }) => {
+const SettingItem: React.FC<SettingItemProps> = ({ icon, label, description, onPress, rightElement, color = '#3500E5', style }) => {
     const { isDark } = useTheme();
 
     return (
@@ -79,7 +79,7 @@ export default function SettingsScreen({ navigation }: any) {
     };
 
     const handleSupport = () => {
-        Linking.openURL('https://t.me/your_support_bot');
+        Linking.openURL('https://t.me/yyussupovv');
     };
 
     // Helper for visibility
@@ -129,7 +129,7 @@ export default function SettingsScreen({ navigation }: any) {
                                     <SettingItem
                                         icon="language"
                                         label={t('language')}
-                                        color="#243B55" // Dark Blue
+                                        color="#3500E5" // Dark Blue
                                         onPress={() => setLangModalVisible(true)}
                                         rightElement={
                                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -224,7 +224,7 @@ export default function SettingsScreen({ navigation }: any) {
                                             {lang.label}
                                         </Text>
                                         {i18n.language === lang.code && (
-                                            <Ionicons name="checkmark" size={24} color="#243B55" />
+                                            <Ionicons name="checkmark" size={24} color="#3500E5" />
                                         )}
                                     </Pressable>
                                     {index < LANGUAGES.length - 1 && (
@@ -267,9 +267,9 @@ export default function SettingsScreen({ navigation }: any) {
                                     step={1}
                                     value={fontSize}
                                     onValueChange={setFontSize}
-                                    minimumTrackTintColor="#243B55"
+                                    minimumTrackTintColor="#3500E5"
                                     maximumTrackTintColor={isDark ? "#555" : "#CCC"}
-                                    thumbTintColor="#243B55"
+                                    thumbTintColor="#3500E5"
                                 />
                             </View>
 
@@ -309,7 +309,7 @@ export default function SettingsScreen({ navigation }: any) {
                                 <SettingItem
                                     icon="share-social"
                                     label={t('share_app')}
-                                    color="#243B55" // Dark Blue
+                                    color="#3500E5" // Dark Blue
                                     onPress={handleShare}
                                 />
                             )}
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     langLabelActive: {
-        color: '#243B55',
+        color: '#3500E5',
         fontWeight: '600',
     },
     modalSeparator: {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { View, StyleSheet, Pressable, Text, TextInput } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useNavigation } from '@react-navigation/native';
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import * as Haptics from 'expo-haptics';
+import { usePremium } from '../context/PremiumContext';
 
 interface ScreenLayoutProps {
     children: React.ReactNode;
@@ -22,6 +23,7 @@ interface ScreenLayoutProps {
 
 export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, containerStyle, showBackButton, title, edges = ['top', 'bottom', 'left', 'right'], onSearch, headerRight, backLabel }) => {
     const { isDark } = useTheme();
+    const { isPremium } = usePremium();
     const navigation = useNavigation();
     const { t } = useTranslation();
     const [isSearchVisible, setSearchVisible] = React.useState(false);
@@ -64,9 +66,9 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, con
                     >
                         {showBackButton && (
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Ionicons name="chevron-back" size={28} color={isDark ? '#FFF' : '#007AFF'} />
+                                <Ionicons name="chevron-back" size={28} color={isDark ? '#FFF' : '#3500E5'} />
                                 {backLabel && (
-                                    <Text style={{ fontSize: 17, color: isDark ? '#FFF' : '#007AFF', marginLeft: -4 }}>{backLabel}</Text>
+                                    <Text style={{ fontSize: 17, color: isDark ? '#FFF' : '#3500E5', marginLeft: -4 }}>{backLabel}</Text>
                                 )}
                             </View>
                         )}
@@ -118,12 +120,13 @@ export const ScreenLayout: React.FC<ScreenLayoutProps> = ({ children, style, con
             <View style={[styles.content, style]}>
                 {children}
             </View>
+
+
         </SafeAreaView>
     );
 };
 
-// Add import TextInput
-import { TextInput } from 'react-native';
+
 
 const styles = StyleSheet.create({
     container: {

@@ -1,11 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Animated, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Animated, Image, Dimensions } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import * as Haptics from 'expo-haptics';
+
+const { width } = Dimensions.get('window');
+// 3 columns: (Total Width - Padding) / 3
+// We'll use % based width for simplicity in styles or flex wrap
 
 const SIGN_CATEGORIES = [
     { id: 'warning', titleKey: 'warning_signs', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Vienna_Convention_road_sign_Aa.svg/500px-Vienna_Convention_road_sign_Aa.svg.png', color: '#FF9500' },
@@ -26,46 +30,38 @@ const MARKING_CATEGORIES = [
     { id: 'vertical_markings', titleKey: 'vertical_markings', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Singapore_Road_Signs_-_Obstacles_-_Split_Arrow_%28Type_2%29.svg/500px-Singapore_Road_Signs_-_Obstacles_-_Split_Arrow_%28Type_2%29.svg.png', color: '#5856D6' },
 ];
 
-const SignCategoryRow = ({ item, index, navigation, t, isDark }: any) => {
+const SignCategoryGridItem = ({ item, index, navigation, t, isDark }: any) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
         Animated.timing(fadeAnim, {
             toValue: 1,
             duration: 400,
-            delay: index * 20,
+            delay: index * 30,
             useNativeDriver: true,
         }).start();
     }, []);
 
     return (
-        <Animated.View style={{ opacity: fadeAnim }}>
+        <Animated.View style={{ opacity: fadeAnim, width: '31%', margin: '1%', marginBottom: 12 }}>
             <TouchableOpacity
-                style={[styles.msgRow, isDark && styles.msgRowDark]}
-
+                style={[styles.gridCard, isDark && styles.gridCardDark]}
                 onPress={() => {
                     Haptics.selectionAsync();
                     navigation.navigate('SignsList', { categoryId: item.id, title: t(item.titleKey) });
                 }}
             >
-                {/* Avatar with Custom Color */}
-                <View style={[styles.avatar, { backgroundColor: isDark ? '#1E293B' : '#E5E5EA' }]}>
+                <View style={[styles.gridIconContainer, { backgroundColor: isDark ? '#334155' : '#F1F5F9' }]}>
                     <Image
                         source={{ uri: item.imageUrl }}
-                        style={{ width: 40, height: 40 }}
+                        style={{ width: 44, height: 44 }}
                         resizeMode="contain"
                     />
                 </View>
 
-                {/* Content */}
-                <View style={[styles.msgContent, isDark && styles.msgContentBorderDark]}>
-                    <View style={styles.msgHeader}>
-                        <Text style={[styles.senderName, isDark && styles.textWhite]} numberOfLines={1}>
-                            {t(item.titleKey)}
-                        </Text>
-                        <Ionicons name="chevron-forward" size={20} color="#C7C7CC" style={{ marginLeft: 8 }} />
-                    </View>
-                </View>
+                <Text style={[styles.gridLabel, isDark && styles.textWhite]} numberOfLines={2}>
+                    {t(item.titleKey)}
+                </Text>
             </TouchableOpacity>
         </Animated.View>
     );
@@ -87,25 +83,24 @@ export const SignsScreen = ({ navigation }: any) => {
         <ScreenLayout
             edges={['top', 'left', 'right']}
             title={t('signs')}
-            showBackButton={true} // Enable Back Button
+            showBackButton={true}
             backLabel={t('home')}
             onSearch={setFilterText}
-            containerStyle={{ backgroundColor: isDark ? '#0F172A' : '#FFF' }} // SMS Style BG (Rule: 0F172A? User asked for SMS style here. I will use Slate from Rule Screen to match EXACTLY "shu ishlarni qil" (do the same checks))
-        // Wait, "shu ishlarni qil" -> "Do the same things". 
-        // In RulesScreen I ended up with Slate (#0F172A) because "broken".
-        // So I will use Slate here too.
+            containerStyle={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}
         >
             <ScrollView
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
-                style={{ backgroundColor: isDark ? '#0F172A' : '#FFF' }}
+                style={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}
             >
                 {filteredSignCategories.length > 0 && (
                     <>
                         <Text style={[styles.sectionHeader, isDark && styles.textWhite]}>{t('road_signs')}</Text>
-                        {filteredSignCategories.map((item, index) => (
-                            <SignCategoryRow key={item.id} item={item} index={index} navigation={navigation} t={t} isDark={isDark} />
-                        ))}
+                        <View style={styles.gridContainer}>
+                            {filteredSignCategories.map((item, index) => (
+                                <SignCategoryGridItem key={item.id} item={item} index={index} navigation={navigation} t={t} isDark={isDark} />
+                            ))}
+                        </View>
                     </>
                 )}
 
@@ -113,9 +108,11 @@ export const SignsScreen = ({ navigation }: any) => {
                     <>
                         <View style={{ height: 20 }} />
                         <Text style={[styles.sectionHeader, isDark && styles.textWhite]}>{t('road_markings')}</Text>
-                        {filteredMarkingCategories.map((item, index) => (
-                            <SignCategoryRow key={item.id} item={item} index={index + filteredSignCategories.length} navigation={navigation} t={t} isDark={isDark} />
-                        ))}
+                        <View style={styles.gridContainer}>
+                            {filteredMarkingCategories.map((item, index) => (
+                                <SignCategoryGridItem key={item.id} item={item} index={index + filteredSignCategories.length} navigation={navigation} t={t} isDark={isDark} />
+                            ))}
+                        </View>
                     </>
                 )}
 
@@ -133,55 +130,57 @@ export const SignsScreen = ({ navigation }: any) => {
 
 const styles = StyleSheet.create({
     listContent: {
-        paddingVertical: 10,
+        paddingVertical: 16,
         paddingBottom: 120,
+        paddingHorizontal: 8,
     },
     sectionHeader: {
-        fontSize: 22, // Large bold header like "Messages"
+        fontSize: 20,
         fontWeight: '700',
-        paddingHorizontal: 16,
-        marginBottom: 10,
-        color: '#000',
-        marginTop: 10,
+        paddingHorizontal: 8,
+        marginBottom: 12,
+        color: '#1E293B',
+        marginTop: 8,
     },
-    msgRow: {
+    gridContainer: {
         flexDirection: 'row',
-        paddingLeft: 16,
+        flexWrap: 'wrap',
+        justifyContent: 'flex-start',
+    },
+    gridCard: {
+        backgroundColor: '#FFF',
+        borderRadius: 16,
+        padding: 12,
         alignItems: 'center',
-        backgroundColor: 'transparent',
+        justifyContent: 'center',
+        height: 140,
+        width: '100%',
+        // Shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
     },
-    msgRowDark: {
-        backgroundColor: 'transparent',
+    gridCardDark: {
+        backgroundColor: '#1E293B',
+        shadowColor: '#000',
+        shadowOpacity: 0.2,
     },
-    avatar: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+    gridIconContainer: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 14,
-        backgroundColor: '#E5E5EA',
+        marginBottom: 8,
     },
-    msgContent: {
-        flex: 1,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: '#C6C6C8',
-        paddingVertical: 20,
-        paddingRight: 16,
-    },
-    msgContentBorderDark: {
-        borderBottomColor: '#334155',
-    },
-    msgHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    senderName: {
-        fontSize: 18,
+    gridLabel: {
+        fontSize: 12,
         fontWeight: '600',
-        color: '#000',
-        flex: 1,
+        color: '#334155',
+        textAlign: 'center',
+        lineHeight: 16,
     },
     textWhite: {
         color: '#E2E8F0',

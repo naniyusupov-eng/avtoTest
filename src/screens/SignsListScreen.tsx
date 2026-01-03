@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, Image, Pressable, Dimensions } from 'react-native';
+import { View, StyleSheet, FlatList, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +23,7 @@ export const SignsListScreen = ({ route }: any) => {
     const signs = SIGNS_DATA.filter(sign => sign.category === categoryId);
 
     const filteredSigns = signs.filter(item => {
-        const name = (t(item.name_key) || item.name_uz || '').toLowerCase();
+        const name = (t(item.name_key || '') || item.name_uz || '').toLowerCase();
         const code = (item.code || '').toLowerCase();
         const search = filterText.toLowerCase();
         return name.includes(search) || code.includes(search);
@@ -33,7 +33,7 @@ export const SignsListScreen = ({ route }: any) => {
         // Adjust gap logic if needed, or use columnWrapperStyle GAP
 
         return (
-            <Pressable
+            <TouchableOpacity
                 style={[
                     styles.itemCard,
                     isDark && styles.itemCardDark,
@@ -60,10 +60,10 @@ export const SignsListScreen = ({ route }: any) => {
                         style={[styles.nameText, isDark && styles.textWhite]}
                         numberOfLines={3}
                     >
-                        {t(item.name_key) || item.name_uz}
+                        {t(item.name_key || '') || item.name_uz}
                     </Text>
                 </View>
-            </Pressable>
+            </TouchableOpacity>
         );
     };
 

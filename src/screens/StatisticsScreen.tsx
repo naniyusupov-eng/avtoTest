@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Dimensions, Pressable, Animated, Easing, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions, Pressable, Animated, Easing, Alert, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
@@ -42,15 +42,65 @@ export default function StatisticsScreen({ navigation }: any) {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(30)).current;
 
-    const [stats] = useState({
-        total: 12,
-        passed: 8,
-        failed: 4,
-        score: 82,
-        streak: 5
+    const [stats, setStats] = useState({
+        total: 0,
+        passed: 0,
+        failed: 0,
+        score: 0,
+        streak: 0,
+        today: 0
     });
 
     useEffect(() => {
+        const loadStats = async () => {
+            try {
+                const stored = await AsyncStorage.getItem('tickets_progress');
+                if (stored) {
+                    const progress = JSON.parse(stored);
+                    const values: any[] = Object.values(progress);
+
+                    const passed = values.filter(v => v.status === 'completed').length; // Corrected status check
+                    const failed = values.filter(v => v.status === 'failed' || v.status === 'in_progress').length;
+                    const total = values.length;
+
+                    // Today calculation
+                    const todayStart = new Date().setHours(0, 0, 0, 0);
+                    const todayCount = values.filter(v => v.lastOpened && v.lastOpened >= todayStart).length;
+
+                    // Simple score
+                    let sumScore = 0;
+                    let countScore = 0;
+                    values.forEach(v => {
+                        if (v.score !== undefined && (v.score + v.wrong) > 0) {
+                            // v.score is correct count. Total is score+wrong if not saved explicitly
+                            // Better: v.score / 20 * 100? Assuming 20 q.
+                            // Actually, logic was: correctCount / totalCount.
+                            // Let's stick to simple average if available or just use passed %?
+                            // User asked for specific 4 stats below results. Main score logic can stay as is (lines 68-77).
+                        }
+                        if (v.status === 'completed') sumScore += 100; // Simplified score logic based on status if detailed score missing
+                        // Preserving original logic approximately:
+                    });
+                    // Re-reading original logic:
+                    // v.correctCount / v.totalCount. 
+                    // I will restore original logic for score but fix the status check strings if needed.
+                    // Original used v.status === 'passed'. But TicketDetail saves 'completed' (Line 286).
+                    // I should fix that match.
+
+                    // Correct Score Logic:
+                    // New Score Logic: Percentage of tickets passed out of 120
+                    const score = Math.round((passed / 120) * 100);
+
+                    setStats(prev => ({ ...prev, total, passed, failed, score, today: todayCount }));
+                }
+            } catch (e) {
+                console.log('Error loading stats:', e);
+            }
+        };
+
+        const unsubscribe = navigation.addListener('focus', loadStats);
+        loadStats();
+
         Animated.parallel([
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -64,50 +114,11 @@ export default function StatisticsScreen({ navigation }: any) {
                 useNativeDriver: true,
             })
         ]).start();
-    }, []);
 
-    // Compact Stat Row Item
-    const CompactStatItem = ({ icon, label, value, color, bgColor, delay }: any) => {
-        const scale = useRef(new Animated.Value(0.9)).current;
-        const opacity = useRef(new Animated.Value(0)).current;
+        return unsubscribe;
+    }, [navigation]);
 
-        useEffect(() => {
-            Animated.parallel([
-                Animated.timing(opacity, {
-                    toValue: 1,
-                    duration: 600,
-                    delay: delay,
-                    useNativeDriver: true
-                }),
-                Animated.spring(scale, {
-                    toValue: 1,
-                    delay: delay,
-                    friction: 8,
-                    useNativeDriver: true
-                })
-            ]).start();
-        }, []);
 
-        return (
-            <Animated.View style={[
-                styles.compactItem,
-                {
-                    backgroundColor: isDark ? '#1E293B' : bgColor,
-                    opacity,
-                    transform: [{ scale }]
-                }
-            ]}>
-                <View style={[styles.compactBefore, { backgroundColor: color }]} />
-                <View style={[styles.compactIconBox, { backgroundColor: `${color}15` }]}>
-                    <Ionicons name={icon} size={18} color={color} />
-                </View>
-                <View style={{ flex: 1 }}>
-                    <Text style={styles.compactLabel}>{label}</Text>
-                    <Text style={[styles.compactValue, isDark && styles.textWhite]}>{value}</Text>
-                </View>
-            </Animated.View>
-        );
-    };
 
     return (
         <ScreenLayout
@@ -123,7 +134,7 @@ export default function StatisticsScreen({ navigation }: any) {
                     {/* Main Score Card */}
                     <Pressable onPress={() => Haptics.selectionAsync()} style={({ pressed }) => pressed && { opacity: 0.9 }}>
                         <LinearGradient
-                            colors={isDark ? ['#3B82F6', '#1E40AF'] : ['#4F46E5', '#3B82F6']}
+                            colors={['#3500E5', '#240099']}
                             style={styles.mainCard}
                             start={{ x: 0, y: 0 }}
                             end={{ x: 1, y: 1 }}
@@ -146,44 +157,45 @@ export default function StatisticsScreen({ navigation }: any) {
                         </LinearGradient>
                     </Pressable>
 
-                    {/* Compact Activity Grid (2x2 but smaller/horizontal focus) */}
-
+                    {/* Detailed Stats Grid */}
                     <View style={styles.compactGrid}>
-                        <CompactStatItem
-                            icon="checkmark-circle"
-                            label={t('passed')}
-                            value={stats.passed}
-                            color="#10B981"
-                            bgColor="#F0FDF4"
-                            delay={100}
-                        />
-                        <CompactStatItem
-                            icon="close-circle"
-                            label={t('failed_count')}
-                            value={stats.failed}
-                            color="#EF4444"
-                            bgColor="#FEF2F2"
-                            delay={200}
-                        />
-                        <CompactStatItem
-                            icon="layers"
-                            label={t('total_tests')}
-                            value={stats.total}
-                            color="#6366F1"
-                            bgColor="#EEF2FF"
-                            delay={300}
-                        />
-                        <CompactStatItem
-                            icon="flame"
-                            label={t('daily_streak')}
-                            value={stats.streak}
-                            color="#F59E0B"
-                            bgColor="#FFFBEB"
-                            delay={400}
-                        />
+                        <View style={[styles.compactItem, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}>
+                            <View style={[styles.compactIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                            </View>
+                            <View>
+                                <Text style={styles.compactLabel}>{t('passed_tickets', 'O\'tilgan')}</Text>
+                                <Text style={[styles.compactValue, isDark && styles.textWhite]}>{stats.passed}</Text>
+                            </View>
+                        </View>
+                        <View style={[styles.compactItem, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}>
+                            <View style={[styles.compactIconBox, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
+                                <Ionicons name="close-circle" size={20} color="#EF4444" />
+                            </View>
+                            <View>
+                                <Text style={styles.compactLabel}>{t('failed_tickets', 'O\'tilmagan')}</Text>
+                                <Text style={[styles.compactValue, isDark && styles.textWhite]}>{stats.failed}</Text>
+                            </View>
+                        </View>
+                        <View style={[styles.compactItem, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}>
+                            <View style={[styles.compactIconBox, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
+                                <Ionicons name="calendar" size={20} color="#F59E0B" />
+                            </View>
+                            <View>
+                                <Text style={styles.compactLabel}>{t('opened_today', 'Bugun')}</Text>
+                                <Text style={[styles.compactValue, isDark && styles.textWhite]}>{stats.today}</Text>
+                            </View>
+                        </View>
+                        <View style={[styles.compactItem, { backgroundColor: isDark ? '#1E293B' : '#FFF' }]}>
+                            <View style={[styles.compactIconBox, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+                                <Ionicons name="albums" size={20} color="#6366F1" />
+                            </View>
+                            <View>
+                                <Text style={styles.compactLabel}>{t('total_opened', 'Umumiy')}</Text>
+                                <Text style={[styles.compactValue, isDark && styles.textWhite]}>{stats.total}</Text>
+                            </View>
+                        </View>
                     </View>
-
-                    {/* Mistakes Analysis Button */}
                     <Pressable
                         style={({ pressed }) => [
                             styles.mistakesCard,
@@ -236,6 +248,8 @@ export default function StatisticsScreen({ navigation }: any) {
                         </View>
                     </Pressable>
 
+
+
                 </Animated.View>
             </ScrollView>
         </ScreenLayout>
@@ -248,7 +262,7 @@ const styles = StyleSheet.create({
         paddingBottom: 140,
     },
     mainCard: {
-        borderRadius: 32,
+        borderRadius: 20,
         padding: 24,
         marginBottom: 24, // Reduced margin
         shadowColor: "#4F46E5",
@@ -322,7 +336,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12, // Reduced padding
-        borderRadius: 16, // Slightly smaller radius
+        borderRadius: 20, // Standardized
         overflow: 'hidden',
         position: 'relative',
         // Minimal shadow
@@ -366,7 +380,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16, // Reduced padding for mistakes too to match compact feel? No, keep it prominent but slim.
-        borderRadius: 24,
+        borderRadius: 20,
         shadowColor: "#EF4444",
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.1,

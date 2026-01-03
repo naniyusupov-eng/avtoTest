@@ -111,7 +111,7 @@ export default {
         all_tickets: 'Барчаси',
         saved_tickets: 'Сақланганлар',
         hard_tickets: 'Қийинлари',
-        passed: 'Ўтилган',
+        passed_stat: 'Ўтилган',
         failed_count: 'Хатолар',
         daily_streak: 'Кунлик серия',
         total_tests: 'Жами Тестлар',
@@ -183,5 +183,6 @@ export default {
         passcode_desc: 'Кириш учун код сўраш',
         change_passcode: 'Кодни ўзгартириш',
         biometrics_desc: 'Тезкор кириш',
+        mistakes_completed: 'Хатолар устида ишлаш тугатилди',
     },
 };

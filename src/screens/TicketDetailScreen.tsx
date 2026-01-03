@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Modal, Alert, Dimensions, FlatList, Animated, StatusBar, Platform, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ScreenLayout } from '../components/ScreenLayout';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import { usePremium } from '../context/PremiumContext';
+import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 
 
 
@@ -129,19 +129,29 @@ const generateQuestions = (ticketId: number | string, mode?: string) => {
 export const TicketDetailScreen = ({ route, navigation }: any) => {
     const { ticketNumber, mode } = route.params;
     const { isDark } = useTheme();
+    const { hasComments, isPremium } = usePremium();
     const { t } = useTranslation();
     const insets = useSafeAreaInsets();
 
 
     const [questions] = useState(() => {
         if (route.params?.customQuestions) return route.params.customQuestions;
+
+        if (mode === 'saved' && route.params?.savedList) {
+            return route.params.savedList.map((s: any) => {
+                const ticketQs = generateQuestions(s.ticketNumber);
+                const found = ticketQs.find((q: any) => q.id === s.questionId);
+                return found ? { ...found, ticketNumber: s.ticketNumber } : { ...s, options: [], explanation: '' };
+            });
+        }
+
         const all = generateQuestions(ticketNumber, mode);
         if (mode === 'saved' && route.params?.initialIndex !== undefined) {
             return [all[route.params.initialIndex]];
         }
         return all;
     });
-    const [currentIdx, setCurrentIdx] = useState(mode === 'saved' ? 0 : (route.params?.initialIndex || 0));
+    const [currentIdx, setCurrentIdx] = useState((mode === 'saved' && !route.params?.savedList) ? 0 : (route.params?.initialIndex || 0));
     const [timeLeft, setTimeLeft] = useState(mode === 'exam50' ? 50 * 60 : (mode === 'exam10' ? 10 * 60 : (mode === 'thematic' ? 50 * 60 : 25 * 60)));
     const [answers, setAnswers] = useState<{ [key: number]: string }>({});
     const [results, setResults] = useState<{ [key: number]: boolean }>({});
@@ -149,6 +159,10 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
     const [isFinished, setFinished] = useState(false);
 
     const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+
+    const triggerFinish = () => {
+        setFinished(true);
+    };
 
     const loadSavedQuestions = async () => {
         try {
@@ -170,7 +184,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
     const toggleSave = async () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         const currentQuestion = questions[currentIdx];
-        const uid = `${ticketNumber}-${currentQuestion.id}`;
+        const uid = `${currentQuestion.ticketId || currentQuestion.ticketNumber || ticketNumber}-${currentQuestion.id}`;
 
         try {
             const stored = await AsyncStorage.getItem('saved_questions');
@@ -183,7 +197,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
             } else {
                 items.push({
                     uid,
-                    ticketNumber,
+                    ticketNumber: currentQuestion.ticketId || currentQuestion.ticketNumber || ticketNumber,
                     questionId: currentQuestion.id,
                     text: currentQuestion.text,
                     timestamp: Date.now()
@@ -220,7 +234,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                 const currentResults = resultsRef.current;
                 const answeredCount = Object.keys(currentResults).length;
 
-                if (answeredCount > 0) {
+                if (answeredCount >= 3) {
                     const saveProgress = async () => {
                         const correctCount = Object.values(currentResults).filter(Boolean).length;
                         const wrongCount = Object.values(currentResults).filter(r => r === false).length;
@@ -232,7 +246,8 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                             progress[ticketNumber] = {
                                 status: 'in_progress',
                                 score: correctCount,
-                                wrong: wrongCount
+                                wrong: wrongCount,
+                                lastOpened: Date.now()
                             };
 
                             await AsyncStorage.setItem('tickets_progress', JSON.stringify(progress));
@@ -259,7 +274,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
             setTimeLeft((prev) => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    setFinished(true);
+                    triggerFinish();
                     Alert.alert(t('time_up'), t('exam_finished'));
                     return 0;
                 }
@@ -287,7 +302,8 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                         progress[ticketNumber] = {
                             status: passed ? 'completed' : 'failed',
                             score: correctCount,
-                            wrong: wrongCount
+                            wrong: wrongCount,
+                            lastOpened: Date.now()
                         };
 
                         await AsyncStorage.setItem('tickets_progress', JSON.stringify(progress));
@@ -329,8 +345,8 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                 const registry = stored ? JSON.parse(stored) : {};
                 const current = registry[uid] || { count: 0, question: currentQ };
                 current.count += 1;
-                // Update question content just in case, but keep count
-                registry[uid] = { count: current.count, question: currentQ };
+                // Update question content and ensure ticketId is preserved
+                registry[uid] = { count: current.count, question: { ...currentQ, ticketId: currentQ.ticketId || ticketNumber } };
                 AsyncStorage.setItem('mistake_registry', JSON.stringify(registry));
             });
 
@@ -339,25 +355,43 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
             const isExamMode = mode?.startsWith('exam'); // exam50, exam10, exam20
 
             if (wrongCount >= 3 && isExamMode) {
-                setFinished(true);
+                triggerFinish();
                 return;
             }
         }
 
         // Check completion (all 20 answered)
         if (Object.keys(newAnswers).length === questions.length) {
-            if (mode !== 'saved') {
-                setFinished(true);
+            if (mode !== 'saved' && mode !== 'mistakes') {
+                triggerFinish();
             }
         }
     };
 
+    const handleClearMistakes = () => {
+        Alert.alert(
+            t('reset', 'Tozalash'),
+            t('reset_confirm', 'Barcha natijalar ochib ketadi. Davom etasizmi?'),
+            [
+                { text: t('cancel', 'Bekor qilish'), style: 'cancel' },
+                {
+                    text: t('reset', 'Tozalash'),
+                    style: 'destructive',
+                    onPress: async () => {
+                        await AsyncStorage.setItem('mistake_registry', '{}');
+                        navigation.goBack();
+                    }
+                }
+            ]
+        );
+    };
+
     const scrollToIndex = (index: number) => {
         if (index < 0 || index >= questions.length) {
-            if (index >= questions.length && mode !== 'saved') {
+            if (index >= questions.length && mode !== 'saved' && mode !== 'mistakes') {
                 // Check if all answered
                 if (Object.keys(answers).length === questions.length) {
-                    setFinished(true);
+                    triggerFinish();
                 }
                 // Else: Do nothing, stay on last screen (user request matches this behavior)
             }
@@ -379,7 +413,16 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
     }).current;
 
     const renderHeader = () => (
-        <View style={[styles.header, { paddingTop: insets.top + 10, backgroundColor: isDark ? '#0F172A' : '#FFF' }]}>
+        <View style={[
+            styles.header,
+            {
+                paddingTop: insets.top + 10,
+                backgroundColor: mode === 'mistakes' ? (isDark ? '#0F172A' : '#F8FAFC') : (isDark ? '#0F172A' : '#FFF'),
+                borderBottomWidth: mode === 'mistakes' ? 0 : StyleSheet.hairlineWidth,
+                elevation: mode === 'mistakes' ? 0 : 4,
+                shadowOpacity: mode === 'mistakes' ? 0 : 0.1
+            }
+        ]}>
 
             <View style={[styles.headerTop, { position: 'relative' }]}>
                 {/* Left */}
@@ -392,9 +435,11 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                     <Text style={[styles.timerText, { color: isDark ? '#FFF' : '#1E293B' }]} numberOfLines={1}>
                         {mode === 'marathon' ? 'Marafon' :
                             (mode === 'thematic' ? (route.params.topicTitle || 'Mavzu') :
-                                (mode === 'exam50' ? 'Katta Test' :
-                                    (mode === 'exam20' ? 'Imtihon' :
-                                        (mode === 'exam10' ? 'Mini Test' : `${ticketNumber}-${t('ticket', 'Bilet').toLowerCase()}`))))}
+                                (mode === 'mistakes' ? t('work_on_mistakes', 'Xatolar ustida ishlash') :
+                                    (mode === 'saved' ? `${t('ticket', 'Bilet')} ${questions[currentIdx]?.ticketId || questions[currentIdx]?.ticketNumber || ticketNumber} • ${t('question', 'Savol')} ${questions[currentIdx]?.id}` :
+                                        (mode === 'exam50' ? 'Katta Test' :
+                                            (mode === 'exam20' ? 'Imtihon' :
+                                                (mode === 'exam10' ? 'Mini Test' : `${ticketNumber}-${t('ticket', 'Bilet').toLowerCase()}`))))))}
                     </Text>
                 </View>
 
@@ -402,13 +447,21 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                 <View style={styles.headerActions}>
                     {mode === 'marathon' && (
                         <Pressable
-                            onPress={() => setFinished(true)}
+                            onPress={() => triggerFinish()}
                             style={{ backgroundColor: '#EF4444', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
                         >
                             <Text style={{ color: '#FFF', fontWeight: '700', fontSize: 13 }}>Yakunlash</Text>
                         </Pressable>
                     )}
-                    {mode !== 'saved' && mode !== 'marathon' && (
+                    {mode === 'mistakes' && (
+                        <Pressable
+                            onPress={handleClearMistakes}
+                            style={{ backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEE2E2', width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }}
+                        >
+                            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                        </Pressable>
+                    )}
+                    {mode !== 'saved' && mode !== 'marathon' && mode !== 'mistakes' && (
                         <View style={{ backgroundColor: isDark ? '#1E293B' : '#F1F5F9', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}>
                             <Text style={{ fontSize: 14, fontWeight: '700', fontVariant: ['tabular-nums'], color: timeLeft < 60 ? '#EF4444' : (isDark ? '#E2E8F0' : '#475569') }}>
                                 {formatTime(timeLeft)}
@@ -436,13 +489,14 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                 </View>
             )}
 
-            {mode !== 'saved' && mode !== 'marathon' && (
+            {mode !== 'saved' && mode !== 'marathon' && mode !== 'mistakes' && (
                 <FlatList
                     ref={paginationRef}
                     data={questions}
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.paginationContent}
+                    keyExtractor={(_, index) => index.toString()}
                     renderItem={({ item, index }) => {
                         const status = results[index];
                         const isActive = index === currentIdx;
@@ -477,14 +531,40 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                             </Pressable>
                         );
                     }}
-                    keyExtractor={item => item.id.toString()}
+
                 />
             )}
         </View>
     );
 
     const renderQuestion = ({ item, index }: { item: any, index: number }) => {
-        const isAnswered = answers[index] !== undefined;
+        if (mode === 'mistakes') {
+            return (
+                <View style={{
+                    width: width - 64,
+                    alignSelf: 'center',
+                    marginVertical: 4,
+                    padding: 12,
+                    borderRadius: 20,
+                    backgroundColor: isDark ? '#1E293B' : '#FFF',
+                    borderWidth: 1,
+                    borderColor: isDark ? '#334155' : '#E2E8F0',
+                    shadowColor: isDark ? '#000' : '#64748B',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: isDark ? 0.3 : 0.08,
+                    shadowRadius: 12,
+                    elevation: 4
+                }}>
+                    <Text style={{ fontSize: 11, fontWeight: '800', textAlign: 'center', color: '#6366F1', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        {t('ticket', 'Bilet')} {item.ticketId || '?'} • {t('question', 'Savol')} {item.id}
+                    </Text>
+                    <Text style={[styles.qText, { color: isDark ? '#F1F5F9' : '#1E293B', marginBottom: 12, fontSize: 14, textAlign: 'center', lineHeight: 20 }]}>
+                        {item.text}
+                    </Text>
+                    {renderSharedContent(item, index)}
+                </View>
+            );
+        }
 
         return (
             <View style={{ width: QUESTION_WIDTH, flex: 1 }}>
@@ -492,132 +572,167 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Question Text (No Number Prefix) */}
                     <Text style={[styles.qText, { color: isDark ? '#F1F5F9' : '#1E293B', textAlign: 'center', marginBottom: 32 }]}>
                         {item.text}
                     </Text>
+                    {renderSharedContent(item, index)}
+                </ScrollView>
+            </View>
+        );
+    };
 
-                    {/* Compact Image Placeholder */}
-                    {item.image && (
-                        <Image
-                            source={{ uri: item.image }}
-                            style={[styles.imageArea, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
-                            resizeMode="cover"
-                        />
-                    )}
+    const renderSharedContent = (item: any, index: number) => {
+        const isAnswered = answers[index] !== undefined;
+        return (
+            <View>
+                {/* Compact Image Placeholder */}
+                {item.image && (
+                    <Image
+                        source={{ uri: item.image }}
+                        style={[styles.imageArea, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
+                        resizeMode="cover"
+                    />
+                )}
 
-                    {/* Options */}
-                    <View style={styles.optionsList}>
-                        {item.options.map((opt: any, optIndex: number) => {
-                            const isSelected = answers[index] === opt.id;
-                            const isCorrect = opt.id === item.correctOptionId;
-                            const done = answers[index] !== undefined;
+                {/* Options */}
+                <View style={styles.optionsList}>
+                    {item.options.map((opt: any, optIndex: number) => {
+                        const isSelected = answers[index] === opt.id;
+                        const isCorrect = opt.id === item.correctOptionId;
+                        const done = answers[index] !== undefined;
 
-                            let borderColor = 'transparent';
-                            let bgColor = isDark ? '#1E293B' : '#FFF';
-                            let textColor = isDark ? '#E2E8F0' : '#334155';
-                            let badgeBg = isDark ? '#334155' : '#F1F5F9';
-                            let badgeText = isDark ? '#94A3B8' : '#64748B';
+                        let borderColor = 'transparent';
+                        let bgColor = isDark ? '#1E293B' : '#FFF';
+                        let textColor = isDark ? '#E2E8F0' : '#334155';
+                        let badgeBg = isDark ? '#334155' : '#F1F5F9';
+                        let badgeText = isDark ? '#94A3B8' : '#64748B';
 
-                            if (done) {
-                                if (isSelected && !isCorrect) {
-                                    bgColor = '#EF4444'; // Solid Red
-                                    borderColor = '#EF4444';
-                                    textColor = '#FFF';
-                                    badgeBg = 'rgba(255,255,255,0.2)';
-                                    badgeText = '#FFF';
-                                } else if (isCorrect) {
-                                    bgColor = '#10B981'; // Solid Green
-                                    borderColor = '#10B981';
-                                    textColor = '#FFF';
-                                    badgeBg = 'rgba(255,255,255,0.2)';
-                                    badgeText = '#FFF';
-                                }
+                        if (done) {
+                            if (isSelected && !isCorrect) {
+                                bgColor = '#EF4444';
+                                borderColor = '#EF4444';
+                                textColor = '#FFF';
+                                badgeBg = 'rgba(255,255,255,0.2)';
+                                badgeText = '#FFF';
+                            } else if (isCorrect) {
+                                bgColor = '#10B981';
+                                borderColor = '#10B981';
+                                textColor = '#FFF';
+                                badgeBg = 'rgba(255,255,255,0.2)';
+                                badgeText = '#FFF';
                             }
+                        }
 
-                            return (
-                                <Pressable
-                                    key={opt.id}
+                        const isMistakesMode = mode === 'mistakes';
 
-                                    onPress={() => handleAnswer(opt.id)}
-                                    disabled={done}
-                                    style={[
-                                        styles.optionBtn,
-                                        { backgroundColor: bgColor, borderColor },
-                                        !done && isDark && { backgroundColor: '#1E293B' }
-                                    ]}
-                                >
-                                    <View style={[styles.fBadge, { backgroundColor: badgeBg }]}>
-                                        <Text style={[styles.fBadgeText, { color: badgeText }]}>F{optIndex + 1}</Text>
-                                    </View>
-                                    <Text style={[styles.optText, { color: textColor }]}>{opt.text}</Text>
-                                </Pressable>
-                            )
-                        })}
-                    </View>
+                        if (isMistakesMode && !done) {
+                            borderColor = isDark ? '#334155' : '#E2E8F0';
+                        }
 
-                    {/* Action Buttons Row */}
-                    <View style={[styles.actionRow, { gap: 0, justifyContent: 'space-between', marginTop: 'auto', paddingTop: 24 }]}>
-                        {/* Explanation Button (Left) */}
-                        <Pressable
-                            style={{
-                                width: 56,
-                                height: 56,
-                                borderRadius: 16,
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                backgroundColor: isAnswered ? '#EFF6FF' : (isDark ? '#334155' : '#F1F5F9'),
-                                opacity: isAnswered ? 1 : 0.5
-                            }}
-                            onPress={() => isAnswered && setExplanationVisible(true)}
-                            disabled={!isAnswered}
-                        >
+                        return (
+                            <Pressable
+                                key={opt.id}
+                                onPress={() => handleAnswer(opt.id)}
+                                disabled={done}
+                                style={[
+                                    styles.optionBtn,
+                                    { backgroundColor: bgColor, borderColor },
+                                    !done && isDark && { backgroundColor: '#1E293B' },
+                                    isMistakesMode && { marginBottom: 8, borderWidth: 1, paddingVertical: 8 }
+                                ]}
+                            >
+                                <View style={[styles.fBadge, { backgroundColor: badgeBg }, isMistakesMode && { width: 32, height: 26, borderRadius: 6, justifyContent: 'center', alignItems: 'center', padding: 0 }]}>
+                                    <Text style={[styles.fBadgeText, { color: badgeText }, isMistakesMode && { fontSize: 13, lineHeight: 16, fontWeight: '700' }]}>{isMistakesMode ? 'f' : 'F'}{optIndex + 1}</Text>
+                                </View>
+                                <Text style={[styles.optText, { color: textColor }, isMistakesMode && { fontSize: 13, lineHeight: 18 }]}>{opt.text}</Text>
+                            </Pressable>
+                        )
+                    })}
+                </View>
+
+                {/* Action Buttons Row */}
+                <View style={[styles.actionRow, { gap: 0, justifyContent: 'space-between', marginTop: 'auto', paddingTop: 24 }]}>
+                    {/* Explanation Button (Left) */}
+                    <Pressable
+                        style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: 20,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            backgroundColor: isAnswered ? '#EFF6FF' : (isDark ? '#334155' : '#F1F5F9'),
+                            opacity: isAnswered ? 1 : 0.5
+                        }}
+                        onPress={() => {
+                            if (!isAnswered) return;
+                            if (!hasComments) {
+                                Alert.alert(
+                                    t('premium_required', 'Obuna kerak'),
+                                    t('buy_comments_desc', 'Izohlarni ko\'rish uchun obuna sotib oling'),
+                                    [
+                                        { text: t('cancel', 'Bekor qilish'), style: 'cancel' },
+                                        { text: t('buy', 'Sotib olish'), onPress: () => navigation.navigate('Tariflar') }
+                                    ]
+                                );
+                                return;
+                            }
+                            setExplanationVisible(true);
+                        }}
+                        disabled={!isAnswered}
+                    >
+                        <View>
                             <Ionicons name="bulb-outline" size={24} color={isAnswered ? '#3B82F6' : (isDark ? '#94A3B8' : '#94A3B8')} />
-                        </Pressable>
+                            {!hasComments && (
+                                <View style={{ position: 'absolute', top: -8, right: -8, backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderRadius: 6, padding: 2 }}>
+                                    <Ionicons name="lock-closed" size={12} color="#F59E0B" />
+                                </View>
+                            )}
+                        </View>
+                    </Pressable>
 
-                        {/* Next Button (Center) */}
+                    {/* Next Button (Center) */}
+                    {mode !== 'mistakes' && (
                         <Pressable
                             style={{
                                 flex: 1,
                                 height: 56,
-                                borderRadius: 16,
-                                backgroundColor: '#3B82F6',
+                                borderRadius: 20,
+                                backgroundColor: '#3500E5',
                                 flexDirection: 'row',
                                 justifyContent: 'center',
                                 alignItems: 'center',
                                 marginHorizontal: 12
                             }}
                             onPress={() => scrollToIndex(index + 1)}
-
                         >
                             <Text style={{ color: '#FFF', fontSize: 16, fontWeight: '700', marginRight: 8 }}>{t('next', 'Keyingisi')}</Text>
                             <Ionicons name="arrow-forward" size={20} color="#FFF" />
                         </Pressable>
+                    )}
 
-                        {/* Save Button (Right) */}
-                        <Pressable
-                            onPress={toggleSave}
-                            style={{
-                                width: 56,
-                                height: 56,
-                                borderRadius: 16,
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                backgroundColor: savedIds.has(`${ticketNumber}-${item.id}`) ? (isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFFBEB') : (isDark ? '#334155' : '#F1F5F9'),
-                            }}
-                        >
-                            <Ionicons
-                                name={savedIds.has(`${ticketNumber}-${item.id}`) ? "bookmark" : "bookmark-outline"}
-                                size={24}
-                                color={savedIds.has(`${ticketNumber}-${item.id}`) ? '#F59E0B' : (isDark ? '#CBD5E1' : '#475569')}
-                            />
-                        </Pressable>
-                    </View>
-
-                </ScrollView>
+                    {/* Save Button (Right) */}
+                    <Pressable
+                        onPress={toggleSave}
+                        style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: 20,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            backgroundColor: savedIds.has(`${item.ticketId || item.ticketNumber || ticketNumber}-${item.id}`) ? (isDark ? 'rgba(245, 158, 11, 0.15)' : '#FFFBEB') : (isDark ? '#334155' : '#F1F5F9'),
+                        }}
+                    >
+                        <Ionicons
+                            name={savedIds.has(`${item.ticketId || item.ticketNumber || ticketNumber}-${item.id}`) ? "bookmark" : "bookmark-outline"}
+                            size={24}
+                            color={savedIds.has(`${item.ticketId || item.ticketNumber || ticketNumber}-${item.id}`) ? '#F59E0B' : (isDark ? '#CBD5E1' : '#475569')}
+                        />
+                    </Pressable>
+                </View>
             </View>
         );
     };
+
 
     const renderResult = () => {
         const correctCount = Object.values(results).filter(Boolean).length;
@@ -634,7 +749,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                 <Text style={{ fontSize: 24, fontWeight: '800', marginBottom: 8, color: isDark ? '#FFF' : '#0F172A', textAlign: 'center' }}>
                     {mode === 'marathon'
                         ? t('marathon_result', 'Marafon Natijasi')
-                        : (isSuccess ? t('passed', 'Imtihondan o\'tdingiz!') : t('exam_finished', 'Imtihon yakunlandi'))}
+                        : (mode === 'mistakes' ? t('mistakes_completed', 'Xatolar ustida ishlash tugatildi') : (isSuccess ? t('passed', 'Imtihondan o\'tdingiz!') : t('exam_finished', 'Imtihon yakunlandi')))}
                 </Text>
                 {isSuccess && mode !== 'marathon' && (
                     <Text style={{ fontSize: 16, color: isDark ? '#94A3B8' : '#64748B', marginBottom: 32, textAlign: 'center' }}>
@@ -644,22 +759,23 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                 {(mode === 'marathon' || !isSuccess) && <View style={{ height: 24 }} />}
 
                 {/* Big Stats */}
-                <View style={{ flexDirection: 'row', gap: 16, marginBottom: 32, width: '100%' }}>
-                    <View style={{ flex: 1, backgroundColor: isDark ? '#1E293B' : '#ECFDF5', padding: 16, borderRadius: 20, alignItems: 'center' }}>
-                        <Text style={{ fontSize: 32, fontWeight: '800', color: '#10B981' }}>{correctCount}</Text>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#059669', opacity: 0.8 }}>{t('correct_short', 'To\'g\'ri')}</Text>
+                {mode !== 'mistakes' && (
+                    <View style={{ flexDirection: 'row', gap: 16, marginBottom: 32, width: '100%' }}>
+                        <View style={{ flex: 1, backgroundColor: isDark ? '#1E293B' : '#ECFDF5', padding: 16, borderRadius: 20, alignItems: 'center' }}>
+                            <Text style={{ fontSize: 32, fontWeight: '800', color: '#10B981' }}>{correctCount}</Text>
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#059669', opacity: 0.8 }}>{t('correct_short', 'To\'g\'ri')}</Text>
+                        </View>
+                        <View style={{ flex: 1, backgroundColor: isDark ? '#1E293B' : '#FEF2F2', padding: 16, borderRadius: 20, alignItems: 'center' }}>
+                            <Text style={{ fontSize: 32, fontWeight: '800', color: '#EF4444' }}>{wrongCount}</Text>
+                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#B91C1C', opacity: 0.8 }}>{t('wrong_short', 'Xato')}</Text>
+                        </View>
                     </View>
-                    <View style={{ flex: 1, backgroundColor: isDark ? '#1E293B' : '#FEF2F2', padding: 16, borderRadius: 20, alignItems: 'center' }}>
-                        <Text style={{ fontSize: 32, fontWeight: '800', color: '#EF4444' }}>{wrongCount}</Text>
-                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#B91C1C', opacity: 0.8 }}>{t('wrong_short', 'Xato')}</Text>
-                    </View>
-                </View>
+                )}
 
                 {/* Grid */}
-                {/* Grid */}
-                {mode !== 'marathon' && (
+                {mode !== 'marathon' && mode !== 'mistakes' && (
                     <View style={{ width: '100%', flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginBottom: 40 }}>
-                        {questions.map((_, i) => {
+                        {questions.map((_: any, i: number) => {
                             const res = results[i];
                             let bg = isDark ? '#334155' : '#E2E8F0';
                             if (res === true) bg = '#10B981';
@@ -673,48 +789,57 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                     </View>
                 )}
 
-                {/* Actions */}
                 <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
                     <Pressable
                         onPress={() => navigation.goBack()}
-                        style={{ flex: 1, backgroundColor: isDark ? '#334155' : '#E2E8F0', paddingVertical: 16, borderRadius: 16, alignItems: 'center' }}
+                        style={{ flex: 1, backgroundColor: isDark ? '#334155' : '#E2E8F0', paddingVertical: 16, borderRadius: 20, alignItems: 'center' }}
                     >
                         <Text style={{ fontSize: 16, fontWeight: '700', color: isDark ? '#FFF' : '#334155' }}>{t('main_menu', 'Asosiy menyu')}</Text>
                     </Pressable>
 
-                    <Pressable
-                        onPress={() => {
-                            navigation.replace('TicketDetail', route.params);
-                        }}
-                        style={{ flex: 1, backgroundColor: '#3B82F6', paddingVertical: 16, borderRadius: 16, alignItems: 'center', shadowColor: '#3B82F6', shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}
-                    >
-                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFF' }}>{t('retry', 'Qayta urinish')}</Text>
-                    </Pressable>
+                    {mode !== 'mistakes' && (
+                        <Pressable
+                            onPress={() => {
+                                navigation.replace('TicketDetail', route.params);
+                            }}
+                            style={{ flex: 1, backgroundColor: '#3500E5', paddingVertical: 16, borderRadius: 20, alignItems: 'center', shadowColor: '#3500E5', shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 }}
+                        >
+                            <Text style={{ fontSize: 16, fontWeight: '700', color: '#FFF' }}>{t('retry', 'Qayta urinish')}</Text>
+                        </Pressable>
+                    )}
                 </View>
             </ScrollView>
         );
     };
 
     return (
-        <View style={[styles.container, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
-            <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+        <ScreenLayout
+            containerStyle={{ backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}
+            edges={['left', 'right', 'bottom']}
+            style={{ paddingHorizontal: 0 }}
+        >
 
             {!isFinished && renderHeader()}
+
+
 
             {isFinished ? renderResult() : (
                 <FlatList
                     ref={flatListRef}
                     data={questions}
                     renderItem={renderQuestion}
-                    horizontal
-                    pagingEnabled
+                    horizontal={mode !== 'mistakes'}
+                    pagingEnabled={mode !== 'mistakes'}
                     showsHorizontalScrollIndicator={false}
-                    keyExtractor={item => item.id.toString()}
+
                     onViewableItemsChanged={onViewableItemsChanged}
-                    viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
-                    scrollEventThrottle={16}
+                    viewabilityConfig={{ itemVisiblePercentThreshold: 50 }}
+                    keyExtractor={(item) => String(item.id)}
                 />
             )}
+
+
+
 
             {/* Simple Modal */}
             <Modal
@@ -735,7 +860,7 @@ export const TicketDetailScreen = ({ route, navigation }: any) => {
                     </View>
                 </View>
             </Modal>
-        </View>
+        </ScreenLayout>
     );
 };
 
@@ -805,13 +930,13 @@ const styles = StyleSheet.create({
     // Content
     scrollContent: {
         padding: 20,
-        paddingBottom: 50,
+        paddingBottom: 100,
         flexGrow: 1,
     },
     imageArea: {
         width: '100%',
         aspectRatio: 16 / 9,
-        borderRadius: 16,
+        borderRadius: 20,
         marginBottom: 24,
         justifyContent: 'center',
         alignItems: 'center',
@@ -830,7 +955,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 12,
-        borderRadius: 14,
+        borderRadius: 20,
         borderWidth: 1,
         borderColor: 'transparent', // Default no border
         // Light shadow for depth
@@ -876,7 +1001,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 14,
-        borderRadius: 12,
+        borderRadius: 20,
         gap: 8,
     },
     actionBtnText: {
@@ -891,7 +1016,7 @@ const styles = StyleSheet.create({
         padding: 24,
     },
     modalCard: {
-        borderRadius: 24,
+        borderRadius: 20,
         padding: 24,
         alignItems: 'center',
     },
@@ -907,10 +1032,10 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     modalBtn: {
-        backgroundColor: '#3B82F6',
+        backgroundColor: '#3500E5',
         paddingHorizontal: 32,
         paddingVertical: 12,
-        borderRadius: 12,
+        borderRadius: 20,
     },
     modalBtnText: {
         color: '#FFF',

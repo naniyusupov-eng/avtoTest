@@ -1,7 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Animated } from 'react-native';
-import { Text } from '../components/ThemedText';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View, Animated, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTheme } from '../context/ThemeContext';
 
@@ -13,14 +11,14 @@ export default function WelcomeScreen({ navigation }: any) {
         // Fade in animation
         Animated.timing(fadeAnim, {
             toValue: 1,
-            duration: 500,
+            duration: 800,
             useNativeDriver: true,
         }).start();
 
-        // Auto-navigate after 1 second
+        // Auto-navigate after 2 seconds
         const timer = setTimeout(() => {
             navigation.replace('Main');
-        }, 1500); // 1.5s to account for entry animation
+        }, 2000);
 
         return () => clearTimeout(timer);
     }, [navigation]);
@@ -30,8 +28,10 @@ export default function WelcomeScreen({ navigation }: any) {
             <StatusBar style={isDark ? "light" : "dark"} />
 
             <Animated.View style={[styles.logoContainer, { opacity: fadeAnim }]}>
-                <Ionicons name="car-sport" size={100} color="#007AFF" />
-                <Text style={[styles.logoText, isDark && styles.textDark]}>AvtoTest</Text>
+                <Image
+                    source={isDark ? require('../../assets/PravaGPTWhite.png') : require('../../assets/PravaGPTLogo.png')}
+                    style={styles.logo}
+                />
             </Animated.View>
         </View>
     );
@@ -45,19 +45,17 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     containerDark: {
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#1E293B',
     },
     logoContainer: {
         alignItems: 'center',
         justifyContent: 'center',
+        width: '100%',
+        paddingHorizontal: 40
     },
-    logoText: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        marginTop: 16,
-        color: '#000',
-    },
-    textDark: {
-        color: '#fff',
-    },
+    logo: {
+        width: '90%',
+        height: 140,
+        resizeMode: 'contain'
+    }
 });

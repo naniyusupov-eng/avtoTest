@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, ScrollView, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,43 +7,48 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const PLANS = [
+if (Platform.OS === 'android') {
+    if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+}
+
+const CATEGORIES = [
     {
-        id: 'weekly',
-        titleKey: 'weekly_plan',
-        price: '19,000',
-        suffixKey: 'per_week',
-        features: ['feature_full_access', 'feature_no_ads'],
-        gradient: ['#4c669f', '#3b5998'] as const,
-        icon: 'calendar-outline' as const,
+        id: 'ads',
+        title: 'Reklamani o\'chirish',
+        icon: 'notifications-off' as const,
+        gradient: ['#3500E5', '#240099'] as const,
     },
     {
-        id: 'monthly',
-        titleKey: 'monthly_plan',
-        price: '39,000',
-        suffixKey: 'per_month',
-        features: ['feature_full_access', 'feature_no_ads', 'feature_exam'],
-        gradient: ['#007AFF', '#5856D6'] as const,
-        icon: 'star' as const,
-        badge: 'MASHHUR', // Can be translated if separate key needed, but user asked for specific layout
-        popular: true,
-    },
-    {
-        id: 'yearly',
-        titleKey: 'yearly_plan',
-        price: '79,000',
-        suffixKey: 'per_year',
-        features: ['feature_full_access', 'feature_no_ads', 'feature_exam', 'feature_offline', 'feature_support'],
-        gradient: ['#FF9500', '#FF2D55'] as const,
-        icon: 'diamond' as const,
-        badgeKey: 'best_value',
-        popular: true,
-    },
+        id: 'comments',
+        title: 'Izohlarni ko\'rish',
+        icon: 'chatbubbles' as const,
+        gradient: ['#F59E0B', '#D97706'] as const,
+    }
 ];
+
+const PLANS: Record<string, any[]> = {
+    ads: [
+        { id: '30', price: '29 000', suffix: 'so\'m / 30 kun' },
+        { id: '60', price: '39 000', suffix: 'so\'m / 60 kun' },
+        { id: '90', price: '49 000', suffix: 'so\'m / 90 kun' },
+        { id: '120', price: '59 000', suffix: 'so\'m / 120 kun', badge: 'ENG FOYDALI' },
+    ],
+    comments: [
+        { id: '60', price: '39 000', suffix: 'so\'m / 60 kun' },
+        { id: '120', price: '59 000', suffix: 'so\'m / 120 kun', badge: 'TAVSIYA' },
+    ]
+};
 
 export const TariflarScreen = () => {
     const { t } = useTranslation();
-    const { isDark } = useTheme();
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    const toggleExpand = (id: string) => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setExpandedId(prev => prev === id ? null : id);
+    };
 
     return (
         <ScreenLayout
@@ -52,56 +57,55 @@ export const TariflarScreen = () => {
             showBackButton={true}
         >
             <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-                {PLANS.map((plan) => (
-                    <View key={plan.id} style={styles.planWrapper}>
-                        {plan.popular && (
-                            <View style={[styles.popularBadge, plan.id === 'yearly' ? styles.bestValueBadge : null]}>
-                                <Text style={styles.popularText}>
-                                    {plan.badgeKey ? t(plan.badgeKey) : (plan.badge || 'POPULAR')}
-                                </Text>
-                            </View>
-                        )}
-                        <LinearGradient
-                            colors={plan.gradient}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.planCard}
+                {CATEGORIES.map((cat) => (
+                    <View key={cat.id} style={styles.cardWrapper}>
+                        <TouchableOpacity
+                            activeOpacity={0.9}
+                            onPress={() => toggleExpand(cat.id)}
+                            style={styles.touchable}
                         >
-                            <View style={styles.planHeader}>
-                                <View style={styles.iconContainer}>
-                                    <Ionicons name={plan.icon} size={32} color="#FFF" />
-                                </View>
-                                <View style={styles.titleContainer}>
-                                    <Text style={styles.planTitle}>
-                                        {t(plan.titleKey)}
-                                    </Text>
-                                    <View style={styles.priceContainer}>
-                                        <Text style={styles.price}>{plan.price}</Text>
-                                        <Text style={styles.currency}>{t(plan.suffixKey)}</Text>
+                            <LinearGradient
+                                colors={cat.gradient}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.card}
+                            >
+                                <View style={styles.header}>
+                                    <View style={styles.iconBox}>
+                                        <Ionicons name={cat.icon} size={28} color="#FFF" />
                                     </View>
-                                </View>
-                            </View>
-
-                            <View style={styles.featuresContainer}>
-                                {plan.features.map((feature, idx) => (
-                                    <View key={idx} style={styles.featureRow}>
-                                        <View style={styles.checkContainer}>
-                                            <Ionicons name="checkmark" size={18} color="#34C759" />
-                                        </View>
-                                        <Text style={styles.featureText}>
-                                            {t(feature)}
-                                        </Text>
+                                    <View style={styles.headerText}>
+                                        <Text style={styles.title}>{cat.title}</Text>
                                     </View>
-                                ))}
-                            </View>
+                                    <Ionicons
+                                        name={expandedId === cat.id ? "chevron-up" : "chevron-down"}
+                                        size={24}
+                                        color="rgba(255,255,255,0.8)"
+                                    />
+                                </View>
 
-                            <TouchableOpacity style={styles.button}>
-                                <Text style={styles.buttonText}>
-                                    {t('select_plan')}
-                                </Text>
-                                <Ionicons name="arrow-forward" size={20} color="#FFF" />
-                            </TouchableOpacity>
-                        </LinearGradient>
+                                {expandedId === cat.id && (
+                                    <View style={styles.plansList}>
+                                        <View style={styles.divider} />
+                                        {PLANS[cat.id].map((plan: any) => (
+                                            <TouchableOpacity key={plan.id} style={styles.planItem}>
+                                                <View style={styles.planInfo}>
+                                                    <Text style={styles.planPrice}>{plan.price}</Text>
+                                                    <Text style={styles.planSuffix}>{plan.suffix}</Text>
+                                                </View>
+                                                {plan.badge ? (
+                                                    <View style={[styles.badge, plan.badge === 'ENG FOYDALI' ? styles.badgeGreen : styles.badgeGold]}>
+                                                        <Text style={styles.badgeText}>{plan.badge}</Text>
+                                                    </View>
+                                                ) : (
+                                                    <Ionicons name="arrow-forward" size={20} color="rgba(255,255,255,0.5)" />
+                                                )}
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                )}
+                            </LinearGradient>
+                        </TouchableOpacity>
                     </View>
                 ))}
             </ScrollView>
@@ -112,124 +116,99 @@ export const TariflarScreen = () => {
 const styles = StyleSheet.create({
     container: {
         padding: 20,
-        paddingBottom: 40,
-        paddingTop: 40, // Added padding top for badges
     },
-    planWrapper: {
-        marginBottom: 32,
-        position: 'relative',
-    },
-    popularBadge: {
-        position: 'absolute',
-        top: -12,
-        right: 24,
-        backgroundColor: '#FFD700',
-        paddingHorizontal: 16,
-        paddingVertical: 6,
-        borderRadius: 12,
-        zIndex: 10,
+    cardWrapper: {
+        marginBottom: 20,
+        borderRadius: 20,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 4,
+        shadowRadius: 8,
+        elevation: 5,
     },
-    bestValueBadge: {
-        backgroundColor: '#32D74B', // Green for best value
+    touchable: {
+        borderRadius: 20,
     },
-    popularText: {
-        fontSize: 11,
-        fontWeight: '900',
-        color: '#000',
-        letterSpacing: 1,
-        textTransform: 'uppercase',
+    card: {
+        borderRadius: 20,
+        padding: 20,
+        overflow: 'hidden'
     },
-    planCard: {
-        borderRadius: 24,
-        padding: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.3,
-        shadowRadius: 16,
-        elevation: 8,
-    },
-    planHeader: {
+    header: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 24,
     },
-    iconContainer: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    iconBox: {
+        width: 48,
+        height: 48,
+        borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.2)',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
     },
-    titleContainer: {
+    headerText: {
         flex: 1,
     },
-    planTitle: {
-        fontSize: 24,
-        fontWeight: '800',
-        color: '#FFF',
-        marginBottom: 6,
-    },
-    priceContainer: {
-        flexDirection: 'row',
-        alignItems: 'baseline',
-    },
-    price: {
-        fontSize: 28,
-        fontWeight: '900',
-        color: '#FFF',
-    },
-    currency: {
-        fontSize: 14,
-        color: 'rgba(255, 255, 255, 0.8)',
-        marginLeft: 6,
-    },
-    featuresContainer: {
-        marginBottom: 24,
-    },
-    featureRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 14,
-    },
-    checkContainer: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: '#FFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    featureText: {
-        fontSize: 15,
-        color: '#FFF',
-        lineHeight: 22,
-        flex: 1,
-    },
-    button: {
-        backgroundColor: 'rgba(255, 255, 255, 0.25)',
-        borderRadius: 16,
-        paddingVertical: 16,
-        paddingHorizontal: 24,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.3)',
-    },
-    buttonText: {
-        color: '#FFF',
+    title: {
         fontSize: 18,
         fontWeight: '700',
-        marginRight: 8,
+        color: '#FFF',
+        marginBottom: 4,
     },
+    desc: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.8)',
+    },
+    plansList: {
+        marginTop: 20,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        marginBottom: 16,
+    },
+    planItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        padding: 16,
+        borderRadius: 16,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
+    },
+    planInfo: {
+        flexDirection: 'column',
+    },
+    planPrice: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#FFF',
+    },
+    planSuffix: {
+        fontSize: 13,
+        color: 'rgba(255,255,255,0.7)',
+        marginTop: 2,
+    },
+    badge: {
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 10,
+    },
+    badgeGreen: {
+        backgroundColor: '#10B981',
+    },
+    badgeGold: {
+        backgroundColor: '#F59E0B',
+    },
+    badgeText: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: '#FFF',
+        textTransform: 'uppercase',
+    }
 });
 
 export default TariflarScreen;

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Animated, Dimensions, Image } from 'react-native';
 import { Text } from '../components/ThemedText';
 import { ScreenLayout } from '../components/ScreenLayout';
 import { useTranslation } from 'react-i18next';
@@ -36,7 +36,7 @@ export const HomeScreen = ({ navigation }: any) => {
             title: t('exam'),
             subtitle: t('questions_20'),
             icon: 'reader',
-            gradient: isDark ? ['#3B82F6', '#1D4ED8'] : ['#2563EB', '#1E40AF'], // Blue
+            gradient: ['#3500E5', '#240099'], // Brand Color
             route: 'TicketDetail',
             params: { ticketNumber: 'MIX', mode: 'exam20' }
         },
@@ -70,17 +70,15 @@ export const HomeScreen = ({ navigation }: any) => {
     ];
 
     const renderHeader = () => (
-        <View style={styles.header}>
-            <View>
-                <Text style={[styles.brandText, isDark && styles.textWhite]}>AvtoTest</Text>
-            </View>
-        </View>
+        <View style={{ height: 12 }} />
     );
+
+
 
     return (
         <ScreenLayout
             edges={['top', 'left', 'right']}
-            title=""
+            title={t('home')}
             containerStyle={{ backgroundColor: isDark ? BG_DARK : BG_LIGHT }}
             headerRight={null}
         >
@@ -88,6 +86,10 @@ export const HomeScreen = ({ navigation }: any) => {
                 <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
 
                     {renderHeader()}
+
+                    {/* Exam Modes Grid */}
+
+
 
                     {/* Exam Modes Grid */}
                     {/* Exam Modes Grid */}
@@ -298,7 +300,7 @@ const styles = StyleSheet.create({
     boxCard: {
         width: CARD_WIDTH,
         height: 120,
-        borderRadius: 24,
+        borderRadius: 20,
         padding: 16,
         justifyContent: 'space-between',
         // Minimal Shadow
@@ -334,7 +336,7 @@ const styles = StyleSheet.create({
     },
     // Wide Card
     wideCard: {
-        borderRadius: 24,
+        borderRadius: 20,
         padding: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },

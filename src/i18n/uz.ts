@@ -125,7 +125,7 @@ export default {
         all_tickets: 'Barchasi',
         saved_tickets: 'Saqlanganlar',
         hard_tickets: 'Qiyinlari',
-        passed: "O'tilgan",
+        passed_stat: "O'tilgan",
         failed_count: "Xatolar",
         daily_streak: "Kunlik seriya",
         total_tests: "Jami Testlar",
@@ -180,5 +180,6 @@ export default {
         security: "Xavfsizlik",
         logout: "Chiqish",
         biometrics: "Biometrik",
+        mistakes_completed: "Xatolar ustida ishlash tugatildi",
     },
 };

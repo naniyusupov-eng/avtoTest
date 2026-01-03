@@ -137,7 +137,7 @@ export default {
         topic_18: "Движение в жилых зонах",
         topic_19: "Техническое состояние",
         topic_20: "Оказание медицинской помощи",
-        passed: "Пройдено",
+        passed_stat: "Пройдено",
         failed_count: "Ошибки",
         daily_streak: "Ежедневная серия",
         total_tests: "Всего тестов",
@@ -182,5 +182,6 @@ export default {
         passcode_desc: 'Запрашивать код при входе',
         change_passcode: 'Изменить код',
         biometrics_desc: 'Быстрый вход',
+        mistakes_completed: 'Работа над ошибками завершена',
     },
 };
